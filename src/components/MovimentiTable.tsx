@@ -220,27 +220,27 @@ export default function MovimentiTable({ movimenti, branca, canEdit }: Props) {
       ) : (
         <>
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-x-auto">
-            <table className="w-full text-sm min-w-[900px]">
+            <table className="w-full text-xs min-w-[780px]">
               <thead>
                 <tr className="bg-slate-700 text-white">
-                  <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide">#</th>
-                  <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide">Data</th>
-                  <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide">In/Out</th>
-                  <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide">Modalità</th>
-                  <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide">Fondo</th>
-                  <th className="px-5 py-4 text-right text-xs font-semibold uppercase tracking-wide">Importo</th>
-                  <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide">Codice</th>
-                  <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide">Note</th>
-                  <th className="px-5 py-4 text-center text-xs font-semibold uppercase tracking-wide">Status</th>
-                  {canEdit && <th className="px-5 py-4 w-24"></th>}
+                  <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide">#</th>
+                  <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide">Data</th>
+                  <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide">In/Out</th>
+                  <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide">Modalità</th>
+                  <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide">Fondo</th>
+                  <th className="px-3 py-3 text-right text-xs font-semibold uppercase tracking-wide">Importo</th>
+                  <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide">Codice</th>
+                  <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide">Note</th>
+                  <th className="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wide">Status</th>
+                  {canEdit && <th className="px-3 py-3 w-16"></th>}
                 </tr>
               </thead>
               <tbody>
                 {movimenti.map((m, idx) => (
                   <tr key={m.id} className={`border-t border-slate-100 hover:bg-emerald-50/50 transition-colors ${idx % 2 === 0 ? "bg-white" : "bg-slate-50/60"}`}>
-                    <td className="px-5 py-4 text-slate-400 text-xs font-mono">{m.numero}</td>
-                    <td className="px-5 py-4 text-slate-700 whitespace-nowrap font-medium">{m.data}</td>
-                    <td className="px-5 py-4">
+                    <td className="px-3 py-3 text-slate-400 font-mono">{m.numero}</td>
+                    <td className="px-3 py-3 text-slate-700 whitespace-nowrap font-medium">{m.data}</td>
+                    <td className="px-3 py-3">
                       {m.inOut ? (
                         <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
                           m.inOut === "Entrata"
@@ -251,44 +251,44 @@ export default function MovimentiTable({ movimenti, branca, canEdit }: Props) {
                         </span>
                       ) : <span className="text-slate-300">—</span>}
                     </td>
-                    <td className="px-5 py-4 text-slate-600">{m.modalita || <span className="text-slate-300">—</span>}</td>
-                    <td className="px-5 py-4">
+                    <td className="px-3 py-3 text-slate-600">{m.modalita || <span className="text-slate-300">—</span>}</td>
+                    <td className="px-3 py-3">
                       {m.fondo ? (
-                        <span className="text-xs bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full font-medium">{m.fondo}</span>
+                        <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium">{m.fondo}</span>
                       ) : <span className="text-slate-300">—</span>}
                     </td>
-                    <td className={`px-5 py-4 text-right font-semibold tabular-nums ${
+                    <td className={`px-3 py-3 text-right font-semibold tabular-nums whitespace-nowrap ${
                       m.importo === 0 ? "text-slate-800" : m.inOut === "Entrata" ? "text-emerald-700" : "text-red-700"
                     }`}>
                       {m.importo === 0 ? "0.00 €" : `${m.inOut === "Uscita" ? "−" : "+"}${fmt(m.importo)} €`}
                     </td>
-                    <td className="px-5 py-4 text-slate-400 text-xs font-mono">{m.codice === "---" ? "" : m.codice}</td>
-                    <td className="px-5 py-4 text-slate-600 max-w-xs truncate">{m.note}</td>
-                    <td className="px-5 py-4 text-center">
+                    <td className="px-3 py-3 text-slate-400 font-mono">{m.codice === "---" ? "" : m.codice}</td>
+                    <td className="px-3 py-3 text-slate-600 max-w-[180px] truncate">{m.note}</td>
+                    <td className="px-3 py-3 text-center">
                       {(() => {
                         const s = statusFromMovimento(m)
                         return s === "OK!" ? (
-                          <span className="inline-block text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700">OK</span>
+                          <span className="inline-block font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">OK</span>
                         ) : (
-                          <span className="inline-block text-xs font-semibold px-2.5 py-1 rounded-full bg-orange-100 text-orange-700">{s}</span>
+                          <span className="inline-block font-semibold px-2 py-0.5 rounded-full bg-orange-100 text-orange-700">{s}</span>
                         )
                       })()}
                     </td>
                     {canEdit && (
-                      <td className="px-5 py-4 text-right whitespace-nowrap">
+                      <td className="px-3 py-3 text-right whitespace-nowrap">
                         <button
                           onClick={() => openEdit(m)}
-                          className="text-sm text-slate-400 hover:text-emerald-600 transition-colors mr-3 font-medium"
+                          className="text-slate-400 hover:text-emerald-600 transition-colors mr-1"
                           title="Modifica"
                         >
-                          Modifica
+                          ✏️
                         </button>
                         <button
                           onClick={() => openDelete(m)}
-                          className="text-sm text-slate-400 hover:text-red-600 transition-colors font-medium"
+                          className="text-slate-400 hover:text-red-600 transition-colors"
                           title="Elimina"
                         >
-                          Elimina
+                          🗑️
                         </button>
                       </td>
                     )}
