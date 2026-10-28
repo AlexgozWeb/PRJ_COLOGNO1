@@ -1,12 +1,16 @@
 "use client"
 
 import { signIn, useSession } from "next-auth/react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect } from "react"
+import { Suspense } from "react"
 
-export default function LoginPage() {
+function LoginContent() {
   const { data: session } = useSession()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const error = searchParams.get("error")
+  const accessDenied = error === "AccessDenied"
 
   useEffect(() => {
     if (session) router.push("/dashboard")
@@ -24,7 +28,15 @@ export default function LoginPage() {
           />
         </div>
         <h1 className="text-2xl font-bold text-slate-800 mb-1">Nota Spese</h1>
-        <p className="text-slate-500 text-sm mb-8">Gruppo Scout Cologno 1</p>
+        <p className="text-slate-500 text-sm mb-6">Gruppo Scout Cologno 1</p>
+
+        {accessDenied && (
+          <div className="mb-5 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
+            <p className="font-semibold mb-0.5">Accesso non autorizzato</p>
+            <p className="text-red-600 text-xs">La tua email non è nella lista degli utenti autorizzati. Contatta l&apos;amministratore del gruppo.</p>
+          </div>
+        )}
+
         <button
           onClick={() => signIn("google")}
           className="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 rounded-xl px-4 py-3 text-slate-700 font-medium hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm cursor-pointer"
@@ -40,5 +52,13 @@ export default function LoginPage() {
         <p className="mt-6 text-xs text-slate-400">Accesso riservato ai membri del gruppo</p>
       </div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginContent />
+    </Suspense>
   )
 }
