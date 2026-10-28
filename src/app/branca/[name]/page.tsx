@@ -22,29 +22,21 @@ function YForkIcon() {
   )
 }
 
-function WolfRockIcon() {
+function WolfPawIcon() {
   return (
-    <svg viewBox="0 0 24 24" width="20" height="20">
-      <path d="M2 23 Q5 18 8 20 Q10 15 12 19 Q14 15 16 20 Q19 18 22 23 Z" fill="#94a3b8"/>
-      <path d="M6 20 L6 13 Q6 6 12 6 Q18 6 18 13 L18 20 Z" fill="#334155"/>
-      <path d="M7 14 L4 3 L10 10 Z" fill="#334155"/>
-      <path d="M17 14 L20 3 L14 10 Z" fill="#334155"/>
-      <path d="M7.2 13 L5.2 5 L9.5 10 Z" fill="#94a3b8"/>
-      <path d="M16.8 13 L18.8 5 L14.5 10 Z" fill="#94a3b8"/>
-      <ellipse cx="12" cy="16.5" rx="3.5" ry="2.5" fill="#64748b"/>
-      <ellipse cx="9.5" cy="12.5" rx="1.3" ry="1.1" fill="#f59e0b"/>
-      <ellipse cx="14.5" cy="12.5" rx="1.3" ry="1.1" fill="#f59e0b"/>
-      <ellipse cx="9.7" cy="12.5" rx="0.45" ry="0.85" fill="#0f172a"/>
-      <ellipse cx="14.7" cy="12.5" rx="0.45" ry="0.85" fill="#0f172a"/>
-      <ellipse cx="12" cy="15.2" rx="1.1" ry="0.7" fill="#1e293b"/>
-      <path d="M10 9.5 Q12 8.5 14 9.5" stroke="#475569" strokeWidth="0.5" fill="none"/>
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="#f59e0b">
+      <ellipse cx="12" cy="15" rx="4" ry="3.2"/>
+      <ellipse cx="6.5" cy="10.5" rx="1.8" ry="2.2" transform="rotate(-18 6.5 10.5)"/>
+      <ellipse cx="9.5" cy="8.8" rx="1.8" ry="2.2" transform="rotate(-6 9.5 8.8)"/>
+      <ellipse cx="14.5" cy="8.8" rx="1.8" ry="2.2" transform="rotate(6 14.5 8.8)"/>
+      <ellipse cx="17.5" cy="10.5" rx="1.8" ry="2.2" transform="rotate(18 17.5 10.5)"/>
     </svg>
   )
 }
 
 const BRANCA_ICONS: Record<Branca, React.ReactNode> = {
   LC: "🐺",
-  CdA: <WolfRockIcon />,
+  CdA: <WolfPawIcon />,
   EG: "⛺",
   Novi: "🥾",
   Clan: <YForkIcon />,
