@@ -219,8 +219,8 @@ export default function MovimentiTable({ movimenti, branca, canEdit }: Props) {
         </div>
       ) : (
         <>
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-slate-200">
-            <table className="w-full text-sm">
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-x-auto">
+            <table className="w-full text-sm min-w-[900px]">
               <thead>
                 <tr className="bg-slate-700 text-white">
                   <th className="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wide">#</th>

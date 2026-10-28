@@ -80,7 +80,7 @@ export default async function BrancaPage(props: PageProps<'/branca/[name]'>) {
   return (
     <div className="min-h-screen bg-slate-100">
       <header className="bg-slate-800 shadow-lg">
-        <div className="max-w-6xl mx-auto px-8 py-5 flex items-center gap-4 flex-wrap">
+        <div className="max-w-6xl mx-auto px-4 sm:px-8 py-4 sm:py-5 flex items-center gap-3 flex-wrap">
           <img src="/logo-gruppo.png" alt="Logo" className="w-20 h-20 object-contain flex-shrink-0" style={{ mixBlendMode: "screen" }} />
           <Link href={backHref} className="text-slate-400 hover:text-slate-200 text-base transition-colors">← Dashboard</Link>
           <span className="text-slate-600">|</span>
@@ -103,7 +103,7 @@ export default async function BrancaPage(props: PageProps<'/branca/[name]'>) {
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-6 py-8">
+      <main className="max-w-6xl mx-auto px-2 sm:px-6 py-4 sm:py-8">
         <MovimentiTable movimenti={movimenti} branca={branca} canEdit={canEdit} />
       </main>
     </div>

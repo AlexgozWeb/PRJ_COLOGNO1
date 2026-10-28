@@ -91,7 +91,7 @@ export default async function DashboardPage(props: PageProps<'/dashboard'>) {
   return (
     <div className="min-h-screen bg-slate-100">
       <header className="bg-slate-800 shadow-lg">
-        <div className="max-w-5xl mx-auto px-8 py-6 flex justify-between items-center">
+        <div className="max-w-5xl mx-auto px-4 sm:px-8 py-4 sm:py-6 flex justify-between items-center">
           <div className="flex items-center gap-5">
             <img
               src="/logo-gruppo.png"
@@ -116,7 +116,7 @@ export default async function DashboardPage(props: PageProps<'/dashboard'>) {
         </div>
       </header>
 
-      <main className="max-w-5xl mx-auto px-6 py-10">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
         {!config.annoAttivo && admin && (
           <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-xl p-4 text-sm text-yellow-800">
             ⚠️ Nessun anno attivo configurato.{" "}
