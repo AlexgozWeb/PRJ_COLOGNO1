@@ -10,6 +10,7 @@ import { BRANCHE, BRANCA_LABELS, Branca } from "@/types"
 import Link from "next/link"
 import MovimentiTable from "@/components/MovimentiTable"
 import ThemeToggle from "@/components/ThemeToggle"
+import AutoRefresh from "@/components/AutoRefresh"
 
 function YForkIcon() {
   return (
@@ -108,6 +109,7 @@ export default async function BrancaPage(props: PageProps<'/branca/[name]'>) {
       </header>
 
       <main className="max-w-6xl mx-auto px-2 sm:px-6 py-4 sm:py-8">
+        <AutoRefresh intervalMs={10000} />
         <MovimentiTable movimenti={movimenti} branca={branca} canEdit={canEdit} />
       </main>
     </div>
