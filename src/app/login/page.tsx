@@ -18,8 +18,14 @@ function LoginContent() {
 
   if (status === "loading" || session) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-800 via-slate-700 to-emerald-900">
-        <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen flex flex-col items-center justify-center gap-6 bg-gradient-to-br from-slate-800 via-slate-700 to-emerald-900">
+        <img
+          src="/logo-gruppo.png"
+          alt="Gruppo Scout Cologno 1"
+          className="w-36 h-36 object-contain"
+          style={{ mixBlendMode: "screen" }}
+        />
+        <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
