@@ -82,12 +82,12 @@ export default async function BrancaPage(props: PageProps<'/branca/[name]'>) {
       <header className="bg-slate-800 shadow-lg">
         <div className="max-w-6xl mx-auto px-8 py-5 flex items-center gap-4 flex-wrap">
           <img src="/logo-gruppo.png" alt="Logo" className="w-20 h-20 object-contain flex-shrink-0" style={{ mixBlendMode: "screen" }} />
-          <Link href={backHref} className="text-slate-400 hover:text-slate-200 text-sm transition-colors">← Dashboard</Link>
+          <Link href={backHref} className="text-slate-400 hover:text-slate-200 text-base transition-colors">← Dashboard</Link>
           <span className="text-slate-600">|</span>
-          <span className="text-lg">{BRANCA_ICONS[branca]}</span>
-          <h1 className="text-base font-bold text-white">{BRANCA_LABELS[branca]}</h1>
+          <span className="text-2xl">{BRANCA_ICONS[branca]}</span>
+          <h1 className="text-xl font-bold text-white">{BRANCA_LABELS[branca]}</h1>
           {annoName && (
-            <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
+            <span className={`text-sm font-medium px-3 py-1.5 rounded-full ${
               isAnnoAttivo
                 ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
                 : "bg-orange-500/20 text-orange-300 border border-orange-500/30"
@@ -96,7 +96,7 @@ export default async function BrancaPage(props: PageProps<'/branca/[name]'>) {
             </span>
           )}
           {canEdit && (
-            <span className="ml-auto text-xs bg-emerald-500/20 text-emerald-300 font-medium px-2.5 py-1 rounded-full border border-emerald-500/30">
+            <span className="ml-auto text-sm bg-emerald-500/20 text-emerald-300 font-medium px-3 py-1.5 rounded-full border border-emerald-500/30">
               ✏ Modificabile
             </span>
           )}
