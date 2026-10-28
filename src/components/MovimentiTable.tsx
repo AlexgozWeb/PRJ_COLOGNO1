@@ -262,7 +262,7 @@ export default function MovimentiTable({ movimenti, branca, canEdit }: Props) {
                     }`}>
                       {m.importo === 0 ? "0.00 €" : `${m.inOut === "Uscita" ? "−" : "+"}${fmt(m.importo)} €`}
                     </td>
-                    <td className="px-3 py-3 text-slate-400 dark:text-slate-500 font-mono">{m.codice === "---" ? "" : m.codice}</td>
+                    <td className="px-3 py-3 text-slate-600 dark:text-slate-300 font-mono">{m.codice === "---" ? "" : m.codice}</td>
                     <td className="px-3 py-3 text-slate-600 dark:text-slate-300 max-w-[180px] truncate">{m.note}</td>
                     <td className="px-3 py-3 text-center">
                       {(() => {
