@@ -24,7 +24,7 @@ function YForkIcon() {
 
 function WolfPawIcon() {
   return (
-    <svg viewBox="0 0 24 24" width="20" height="20" fill="#f59e0b">
+    <svg viewBox="0 0 24 24" width="26" height="26" fill="#f59e0b">
       <ellipse cx="12" cy="15" rx="4" ry="3.2"/>
       <ellipse cx="6.5" cy="10.5" rx="1.8" ry="2.2" transform="rotate(-18 6.5 10.5)"/>
       <ellipse cx="9.5" cy="8.8" rx="1.8" ry="2.2" transform="rotate(-6 9.5 8.8)"/>

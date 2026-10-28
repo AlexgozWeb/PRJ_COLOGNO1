@@ -24,7 +24,7 @@ function YForkIcon() {
 
 function WolfPawIcon() {
   return (
-    <svg viewBox="0 0 24 24" width="24" height="24" fill="#f59e0b">
+    <svg viewBox="0 0 24 24" width="30" height="30" fill="#f59e0b">
       {/* Polpastrello centrale (grande) */}
       <ellipse cx="12" cy="15" rx="4" ry="3.2"/>
       {/* Dito sinistro esterno */}
