@@ -10,9 +10,9 @@ export const FONDI: Fondo[] = ['Distintivi', 'Materiale', 'Pernotti', 'VdB', 'Al
 export const BRANCHE: Branca[] = ['LC', 'CdA', 'EG', 'Novi', 'Clan', 'CoCa']
 
 export const BRANCA_LABELS: Record<Branca, string> = {
-  LC: 'Branco LC',
-  CdA: 'CdA',
-  EG: 'Esploratori/Guide',
+  LC: 'Branca LC',
+  CdA: 'Branca LC - CdA',
+  EG: 'Esploratori e Guide',
   Novi: 'Noviziato',
   Clan: 'Clan',
   CoCa: 'Comunità Capi',
