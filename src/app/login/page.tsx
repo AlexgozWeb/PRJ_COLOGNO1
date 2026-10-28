@@ -22,8 +22,7 @@ function LoginContent() {
         <img
           src="/logo-gruppo.png"
           alt="Gruppo Scout Cologno 1"
-          className="w-36 h-36 object-contain"
-          style={{ mixBlendMode: "screen" }}
+          className="w-40 h-40 object-contain rounded-full"
         />
         <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
       </div>
