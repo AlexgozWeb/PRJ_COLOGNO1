@@ -88,8 +88,8 @@ function movimentoToForm(m: Movimento): FormData {
   }
 }
 
-const inputCls = "w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-400 bg-white"
-const labelCls = "block text-xs font-medium text-slate-600 mb-1"
+const inputCls = "w-full border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-400 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100"
+const labelCls = "block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1"
 
 interface Props {
   movimenti: Movimento[]
@@ -213,13 +213,13 @@ export default function MovimentiTable({ movimenti, branca, canEdit }: Props) {
       )}
 
       {movimenti.length === 0 ? (
-        <div className="bg-white rounded-xl shadow-sm p-16 text-center border border-slate-200">
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-16 text-center border border-slate-200 dark:border-slate-700">
           <div className="text-5xl mb-4">📋</div>
           <p className="text-slate-400">Nessun movimento registrato.</p>
         </div>
       ) : (
         <>
-          <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-x-auto">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-x-auto">
             <table className="w-full text-xs min-w-[780px]">
               <thead>
                 <tr className="bg-slate-700 text-white">
@@ -237,40 +237,40 @@ export default function MovimentiTable({ movimenti, branca, canEdit }: Props) {
               </thead>
               <tbody>
                 {movimenti.map((m, idx) => (
-                  <tr key={m.id} className={`border-t border-slate-100 hover:bg-emerald-50/50 transition-colors ${idx % 2 === 0 ? "bg-white" : "bg-slate-50/60"}`}>
-                    <td className="px-3 py-3 text-slate-400 font-mono">{m.numero}</td>
-                    <td className="px-3 py-3 text-slate-700 whitespace-nowrap font-medium">{m.data}</td>
+                  <tr key={m.id} className={`border-t border-slate-100 dark:border-slate-700 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/20 transition-colors ${idx % 2 === 0 ? "bg-white dark:bg-slate-800" : "bg-slate-50/60 dark:bg-slate-700/50"}`}>
+                    <td className="px-3 py-3 text-slate-400 dark:text-slate-500 font-mono">{m.numero}</td>
+                    <td className="px-3 py-3 text-slate-700 dark:text-slate-200 whitespace-nowrap font-medium">{m.data}</td>
                     <td className="px-3 py-3">
                       {m.inOut ? (
                         <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
                           m.inOut === "Entrata"
-                            ? "bg-emerald-100 text-emerald-700"
-                            : "bg-red-100 text-red-700"
+                            ? "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300"
+                            : "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300"
                         }`}>
                           {m.inOut === "Entrata" ? "↑" : "↓"} {m.inOut}
                         </span>
-                      ) : <span className="text-slate-300">—</span>}
+                      ) : <span className="text-slate-300 dark:text-slate-600">—</span>}
                     </td>
-                    <td className="px-3 py-3 text-slate-600">{m.modalita || <span className="text-slate-300">—</span>}</td>
+                    <td className="px-3 py-3 text-slate-600 dark:text-slate-300">{m.modalita || <span className="text-slate-300 dark:text-slate-600">—</span>}</td>
                     <td className="px-3 py-3">
                       {m.fondo ? (
-                        <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium">{m.fondo}</span>
-                      ) : <span className="text-slate-300">—</span>}
+                        <span className="bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-full font-medium">{m.fondo}</span>
+                      ) : <span className="text-slate-300 dark:text-slate-600">—</span>}
                     </td>
                     <td className={`px-3 py-3 text-right font-semibold tabular-nums whitespace-nowrap ${
-                      m.importo === 0 ? "text-slate-800" : m.inOut === "Entrata" ? "text-emerald-700" : "text-red-700"
+                      m.importo === 0 ? "text-slate-800 dark:text-slate-200" : m.inOut === "Entrata" ? "text-emerald-700 dark:text-emerald-400" : "text-red-700 dark:text-red-400"
                     }`}>
                       {m.importo === 0 ? "0.00 €" : `${m.inOut === "Uscita" ? "−" : "+"}${fmt(m.importo)} €`}
                     </td>
-                    <td className="px-3 py-3 text-slate-400 font-mono">{m.codice === "---" ? "" : m.codice}</td>
-                    <td className="px-3 py-3 text-slate-600 max-w-[180px] truncate">{m.note}</td>
+                    <td className="px-3 py-3 text-slate-400 dark:text-slate-500 font-mono">{m.codice === "---" ? "" : m.codice}</td>
+                    <td className="px-3 py-3 text-slate-600 dark:text-slate-300 max-w-[180px] truncate">{m.note}</td>
                     <td className="px-3 py-3 text-center">
                       {(() => {
                         const s = statusFromMovimento(m)
                         return s === "OK!" ? (
-                          <span className="inline-block font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">OK</span>
+                          <span className="inline-block font-semibold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300">OK</span>
                         ) : (
-                          <span className="inline-block font-semibold px-2 py-0.5 rounded-full bg-orange-100 text-orange-700">{s}</span>
+                          <span className="inline-block font-semibold px-2 py-0.5 rounded-full bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300">{s}</span>
                         )
                       })()}
                     </td>
@@ -299,20 +299,20 @@ export default function MovimentiTable({ movimenti, branca, canEdit }: Props) {
           </div>
 
           {/* Totali */}
-          <div className="mt-4 bg-white rounded-xl shadow-sm border border-slate-200 px-5 py-4 flex gap-6 justify-end items-center flex-wrap">
+          <div className="mt-4 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 px-5 py-4 flex gap-6 justify-end items-center flex-wrap">
             <div className="text-center">
-              <div className="text-xs text-slate-500 uppercase tracking-wide mb-0.5">Entrate</div>
-              <div className="text-sm font-bold text-emerald-700">+{fmt(totaleEntrate)} €</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-0.5">Entrate</div>
+              <div className="text-sm font-bold text-emerald-700 dark:text-emerald-400">+{fmt(totaleEntrate)} €</div>
             </div>
-            <div className="w-px h-8 bg-slate-200 hidden sm:block"></div>
+            <div className="w-px h-8 bg-slate-200 dark:bg-slate-700 hidden sm:block"></div>
             <div className="text-center">
-              <div className="text-xs text-slate-500 uppercase tracking-wide mb-0.5">Uscite</div>
-              <div className="text-sm font-bold text-red-700">−{fmt(totaleUscite)} €</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-0.5">Uscite</div>
+              <div className="text-sm font-bold text-red-700 dark:text-red-400">−{fmt(totaleUscite)} €</div>
             </div>
-            <div className="w-px h-8 bg-slate-200 hidden sm:block"></div>
+            <div className="w-px h-8 bg-slate-200 dark:bg-slate-700 hidden sm:block"></div>
             <div className="text-center">
-              <div className="text-xs text-slate-500 uppercase tracking-wide mb-0.5">Saldo</div>
-              <div className={`text-base font-bold ${saldo >= 0 ? "text-emerald-700" : "text-red-700"}`}>
+              <div className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-0.5">Saldo</div>
+              <div className={`text-base font-bold ${saldo >= 0 ? "text-emerald-700 dark:text-emerald-400" : "text-red-700 dark:text-red-400"}`}>
                 {saldo >= 0 ? "+" : "−"}{fmt(Math.abs(saldo))} €
               </div>
             </div>
@@ -323,12 +323,12 @@ export default function MovimentiTable({ movimenti, branca, canEdit }: Props) {
       {/* Modal Add/Edit */}
       {(modal === "add" || modal === "edit") && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg border border-slate-200">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50 rounded-t-2xl">
-              <h2 className="font-semibold text-slate-800">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-lg border border-slate-200 dark:border-slate-700">
+            <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between bg-slate-50 dark:bg-slate-700 rounded-t-2xl">
+              <h2 className="font-semibold text-slate-800 dark:text-slate-100">
                 {modal === "add" ? "➕ Aggiungi movimento" : "✏️ Modifica movimento"}
               </h2>
-              <button onClick={closeModal} className="text-slate-400 hover:text-slate-600 text-xl leading-none w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-200 transition-colors">×</button>
+              <button onClick={closeModal} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl leading-none w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">×</button>
             </div>
 
             <div className="px-6 py-5 space-y-4">
@@ -384,7 +384,7 @@ export default function MovimentiTable({ movimenti, branca, canEdit }: Props) {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className={labelCls}>
-                    Importo (€) <span className="font-normal text-slate-400">— sempre positivo</span>
+                    Importo (€) <span className="font-normal text-slate-400 dark:text-slate-500">— sempre positivo</span>
                   </label>
                   <input
                     type="number"
@@ -419,30 +419,30 @@ export default function MovimentiTable({ movimenti, branca, canEdit }: Props) {
                 />
               </div>
 
-              <div className="flex items-center gap-2 text-sm bg-slate-50 rounded-lg px-3 py-2">
-                <span className="text-slate-500">Status:</span>
+              <div className="flex items-center gap-2 text-sm bg-slate-50 dark:bg-slate-700 rounded-lg px-3 py-2">
+                <span className="text-slate-500 dark:text-slate-400">Status:</span>
                 {(() => {
                   const s = calculateStatus(form)
                   return s === "OK!" ? (
-                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">OK</span>
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300">OK</span>
                   ) : (
-                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-orange-100 text-orange-700">{s}</span>
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300">{s}</span>
                   )
                 })()}
               </div>
 
               {error && (
-                <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-sm text-red-700">
+                <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-lg px-3 py-2 text-sm text-red-700 dark:text-red-300">
                   ⚠ {error}
                 </div>
               )}
             </div>
 
-            <div className="px-6 py-4 border-t border-slate-100 flex justify-end gap-3 bg-slate-50 rounded-b-2xl">
+            <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-700 flex justify-end gap-3 bg-slate-50 dark:bg-slate-700 rounded-b-2xl">
               <button
                 onClick={closeModal}
                 disabled={saving}
-                className="px-4 py-2 text-sm text-slate-600 hover:text-slate-800 disabled:opacity-50 hover:bg-slate-200 rounded-lg transition-colors"
+                className="px-4 py-2 text-sm text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-white disabled:opacity-50 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors"
               >
                 Annulla
               </button>
@@ -461,29 +461,29 @@ export default function MovimentiTable({ movimenti, branca, canEdit }: Props) {
       {/* Modal Delete */}
       {modal === "delete" && selected && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm border border-slate-200">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-sm border border-slate-200 dark:border-slate-700">
             <div className="px-6 py-5">
-              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-xl">🗑</span>
               </div>
-              <h2 className="font-semibold text-slate-800 mb-2 text-center">Elimina movimento</h2>
-              <p className="text-sm text-slate-600 text-center">
+              <h2 className="font-semibold text-slate-800 dark:text-slate-100 mb-2 text-center">Elimina movimento</h2>
+              <p className="text-sm text-slate-600 dark:text-slate-300 text-center">
                 Sei sicuro di voler eliminare il movimento <strong>#{selected.numero}</strong>
                 {selected.note ? ` — "${selected.note}"` : ""}?
               </p>
-              <p className="text-xs text-red-600 text-center mt-2">Questa operazione non è reversibile.</p>
+              <p className="text-xs text-red-600 dark:text-red-400 text-center mt-2">Questa operazione non è reversibile.</p>
 
               {error && (
-                <div className="mt-3 bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-sm text-red-700">
+                <div className="mt-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-lg px-3 py-2 text-sm text-red-700 dark:text-red-300">
                   ⚠ {error}
                 </div>
               )}
             </div>
-            <div className="px-6 py-4 border-t border-slate-100 flex justify-end gap-3 bg-slate-50 rounded-b-2xl">
+            <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-700 flex justify-end gap-3 bg-slate-50 dark:bg-slate-700 rounded-b-2xl">
               <button
                 onClick={closeModal}
                 disabled={saving}
-                className="px-4 py-2 text-sm text-slate-600 hover:text-slate-800 disabled:opacity-50 hover:bg-slate-200 rounded-lg transition-colors"
+                className="px-4 py-2 text-sm text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-white disabled:opacity-50 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors"
               >
                 Annulla
               </button>

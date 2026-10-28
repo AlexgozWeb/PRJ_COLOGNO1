@@ -30,11 +30,11 @@ export default function AnnoSelector({ bilanci, annoAttivoId, selectedId }: Prop
 
   return (
     <div className="flex items-center gap-2">
-      <span className="text-xs text-gray-500 whitespace-nowrap">Anno visualizzato:</span>
+      <span className="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">Anno visualizzato:</span>
       <select
         value={selectedId}
         onChange={e => handleChange(e.target.value)}
-        className="border border-gray-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="border border-slate-200 dark:border-slate-600 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100"
       >
         {bilanci.map(b => (
           <option key={b.id} value={b.id}>

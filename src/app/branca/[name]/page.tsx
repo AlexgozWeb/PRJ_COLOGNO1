@@ -9,6 +9,7 @@ import { getMovimenti } from "@/lib/sheets"
 import { BRANCHE, BRANCA_LABELS, Branca } from "@/types"
 import Link from "next/link"
 import MovimentiTable from "@/components/MovimentiTable"
+import ThemeToggle from "@/components/ThemeToggle"
 
 function YForkIcon() {
   return (
@@ -78,7 +79,7 @@ export default async function BrancaPage(props: PageProps<'/branca/[name]'>) {
   const backHref = isAnnoAttivo ? "/dashboard" : `/dashboard?fileId=${fileId}`
 
   return (
-    <div className="min-h-screen bg-slate-100">
+    <div className="min-h-screen bg-slate-100 dark:bg-slate-900">
       <header className="bg-slate-800 shadow-lg">
         <div className="max-w-6xl mx-auto px-4 sm:px-8 py-4 sm:py-5 flex items-center gap-3 flex-wrap">
           <img src="/logo-gruppo.png" alt="Logo" className="w-20 h-20 object-contain flex-shrink-0" style={{ mixBlendMode: "screen" }} />
@@ -96,10 +97,13 @@ export default async function BrancaPage(props: PageProps<'/branca/[name]'>) {
             </span>
           )}
           {canEdit && (
-            <span className="ml-auto text-sm bg-emerald-500/20 text-emerald-300 font-medium px-3 py-1.5 rounded-full border border-emerald-500/30">
+            <span className="text-sm bg-emerald-500/20 text-emerald-300 font-medium px-3 py-1.5 rounded-full border border-emerald-500/30">
               ✏ Modificabile
             </span>
           )}
+          <span className="ml-auto">
+            <ThemeToggle />
+          </span>
         </div>
       </header>
 
