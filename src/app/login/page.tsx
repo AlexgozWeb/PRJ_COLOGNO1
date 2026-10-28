@@ -6,7 +6,7 @@ import { useEffect } from "react"
 import { Suspense } from "react"
 
 function LoginContent() {
-  const { data: session } = useSession()
+  const { data: session, status } = useSession()
   const router = useRouter()
   const searchParams = useSearchParams()
   const error = searchParams.get("error")
@@ -15,6 +15,14 @@ function LoginContent() {
   useEffect(() => {
     if (session) router.push("/dashboard")
   }, [session, router])
+
+  if (status === "loading" || session) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-800 via-slate-700 to-emerald-900">
+        <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-800 via-slate-700 to-emerald-900">
