@@ -1,5 +1,5 @@
 import { getSheetsClient } from "./google-auth"
-import { Movimento, Branca } from "@/types"
+import { Movimento, Branca, BRANCA_CODICE } from "@/types"
 
 
 function parseImporto(raw: string): number {
@@ -36,14 +36,27 @@ function rowToMovimento(row: string[], sheetRowIndex: number): Movimento {
     codice: row[6] || "",
     note: row[7] || "",
     status: row[8] || "",
+    idNota: row[9] || "",
   }
+}
+
+function generateIdNota(branca: Branca, existing: Movimento[]): string {
+  const prefix = BRANCA_CODICE[branca]
+  const nums = existing
+    .map(m => {
+      if (!m.idNota?.startsWith(prefix)) return 0
+      return parseInt(m.idNota.slice(prefix.length)) || 0
+    })
+    .filter(n => n > 0)
+  const max = nums.length > 0 ? Math.max(...nums) : 0
+  return `${prefix}${String(max + 1).padStart(3, "0")}`
 }
 
 export async function getMovimenti(spreadsheetId: string, branca: Branca): Promise<Movimento[]> {
   const sheets = getSheetsClient()
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId,
-    range: `${branca}!A1:I`,
+    range: `${branca}!A1:J`,
   })
   const rows = (response.data.values || []) as string[][]
   return rows
@@ -56,34 +69,43 @@ export async function addMovimento(
   spreadsheetId: string,
   branca: Branca,
   data: Pick<Movimento, "data" | "inOut" | "modalita" | "fondo" | "importo" | "codice" | "note">
-): Promise<void> {
+): Promise<{ idNota: string }> {
   const sheets = getSheetsClient()
   const existing = await getMovimenti(spreadsheetId, branca)
   const nextNum = existing.length + 1
+  const idNota = generateIdNota(branca, existing)
 
-  // Scriviamo direttamente nella riga successiva all'ultimo dato
-  // (l'ultima riga con dati è existing[last].id, la prossima è quella + 1)
   const lastId = existing.length > 0 ? existing[existing.length - 1].id : 3
   const targetRow = lastId + 1
 
-  await sheets.spreadsheets.values.update({
+  // Scrivi A:H (dati) e J (ID_NOTA) in un colpo solo, lasciando I (Status, formula) intatta
+  await sheets.spreadsheets.values.batchUpdate({
     spreadsheetId,
-    range: `${branca}!A${targetRow}:H${targetRow}`,
-    valueInputOption: "USER_ENTERED",
     requestBody: {
-      values: [[
-        nextNum,
-        data.data,
-        data.inOut,
-        data.modalita,
-        data.fondo,
-        data.importo,
-        data.codice,
-        data.note,
-        // colonna I (Status) non scritta: la formula del foglio la gestisce
-      ]],
+      valueInputOption: "USER_ENTERED",
+      data: [
+        {
+          range: `${branca}!A${targetRow}:H${targetRow}`,
+          values: [[
+            nextNum,
+            data.data,
+            data.inOut,
+            data.modalita,
+            data.fondo,
+            data.importo,
+            data.codice,
+            data.note,
+          ]],
+        },
+        {
+          range: `${branca}!J${targetRow}`,
+          values: [[idNota]],
+        },
+      ],
     },
   })
+
+  return { idNota }
 }
 
 export async function updateMovimento(
@@ -93,7 +115,7 @@ export async function updateMovimento(
   data: Partial<Pick<Movimento, "data" | "inOut" | "modalita" | "fondo" | "importo" | "codice" | "note">>
 ): Promise<void> {
   const sheets = getSheetsClient()
-  // Aggiorna solo B:H (dati), lascia intatta la colonna I (Status = formula del foglio)
+  // Aggiorna solo B:H (dati), lascia intatta I (Status = formula) e J (ID_NOTA, immutabile)
   await sheets.spreadsheets.values.update({
     spreadsheetId,
     range: `${branca}!B${rowNumber}:H${rowNumber}`,

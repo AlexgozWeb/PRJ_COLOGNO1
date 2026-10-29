@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { getConfig, isAdmin, getUserPermessi } from "@/lib/config"
 import { getMovimenti, addMovimento, updateMovimento, deleteMovimento } from "@/lib/sheets"
+import { deleteNotaFolder, parseAnnoFromFileName } from "@/lib/drive"
+import { getAnnoAttivoName } from "@/lib/config"
 import { Branca } from "@/types"
 
 const BRANCHE_VALIDE: Branca[] = ['LC', 'CdA', 'EG', 'Novi', 'Clan', 'CoCa', 'Gruppo']
@@ -66,8 +68,8 @@ export async function POST(
     const config = await getConfig()
     if (!config.annoAttivo) return errResponse("Anno attivo non configurato")
 
-    await addMovimento(config.annoAttivo, branca as Branca, body)
-    return Response.json({ success: true })
+    const { idNota } = await addMovimento(config.annoAttivo, branca as Branca, body)
+    return Response.json({ success: true, idNota })
   } catch (e) {
     return errResponse(e instanceof Error ? e.message : "Errore interno")
   }
@@ -110,13 +112,24 @@ export async function DELETE(
     const auth = await checkAuth(branca as Branca, true)
     if (!auth) return errResponse("Non autorizzato", 401)
 
-    const { rowNumber } = await req.json()
+    const { rowNumber, idNota } = await req.json()
     if (!rowNumber) return errResponse("rowNumber mancante", 400)
 
     const config = await getConfig()
     if (!config.annoAttivo) return errResponse("Anno attivo non configurato")
 
     await deleteMovimento(config.annoAttivo, branca as Branca, rowNumber)
+
+    if (idNota) {
+      try {
+        const spreadsheetName = await getAnnoAttivoName(config.annoAttivo)
+        const annoFolder = parseAnnoFromFileName(spreadsheetName)
+        if (annoFolder) await deleteNotaFolder(branca as Branca, idNota, annoFolder)
+      } catch {
+        // Non bloccare la risposta se Drive fallisce
+      }
+    }
+
     return Response.json({ success: true })
   } catch (e) {
     return errResponse(e instanceof Error ? e.message : "Errore interno")
