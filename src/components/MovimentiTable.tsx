@@ -208,7 +208,11 @@ export default function MovimentiTable({ movimenti, branca, canEdit }: Props) {
     for (const file of pendingFiles) {
       const fd = new FormData()
       fd.append("file", file)
-      await fetch(`/api/allegati/${branca}/${idNota}`, { method: "POST", body: fd })
+      const res = await fetch(`/api/allegati/${branca}/${idNota}`, { method: "POST", body: fd })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error || `Errore upload "${file.name}" (HTTP ${res.status})`)
+      }
     }
   }
 
