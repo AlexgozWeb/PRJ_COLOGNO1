@@ -5,10 +5,10 @@ import { authOptions } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { isAdmin, getConfig, getPermessi, getAnnoAttivoName, listBilanci } from "@/lib/config"
 import { getRecentLogs } from "@/lib/logger"
-import Link from "next/link"
 import PermessiManager from "@/components/PermessiManager"
 import AnnoAttivoSelector from "@/components/AnnoAttivoSelector"
-import ThemeToggle from "@/components/ThemeToggle"
+import AppHeader from "@/components/AppHeader"
+import Link from "next/link"
 
 const TIPO_COLORS: Record<string, string> = {
   Drive:  "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300",
@@ -34,16 +34,10 @@ export default async function AdminPage() {
 
   return (
     <div className="min-h-screen bg-slate-100 dark:bg-slate-900">
-      <header className="bg-slate-800 shadow-lg">
-        <div className="max-w-5xl mx-auto px-8 py-5 flex items-center gap-4">
-          <img src="/logo-gruppo.png" alt="Logo" className="w-20 h-20 object-contain flex-shrink-0" style={{ mixBlendMode: "screen" }} />
-          <Link href="/dashboard" className="text-slate-400 hover:text-slate-200 text-sm transition-colors">← Dashboard</Link>
-          <span className="text-slate-600">|</span>
-          <span className="text-lg">⚙️</span>
-          <h1 className="text-base font-bold text-white">Pannello Admin</h1>
-          <span className="ml-auto"><ThemeToggle /></span>
-        </div>
-      </header>
+      <AppHeader backHref="/dashboard">
+        <span className="text-lg flex-shrink-0">⚙️</span>
+        <span className="text-base font-bold text-white">Pannello Admin</span>
+      </AppHeader>
 
       <main className="max-w-5xl mx-auto px-6 py-10 space-y-6">
         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-6 border border-slate-200 dark:border-slate-700">

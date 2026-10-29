@@ -7,9 +7,8 @@ import { redirect, notFound } from "next/navigation"
 import { getConfig, isAdmin, getUserPermessi, getAnnoAttivoName } from "@/lib/config"
 import { getMovimenti } from "@/lib/sheets"
 import { BRANCHE, BRANCA_LABELS, Branca } from "@/types"
-import Link from "next/link"
 import MovimentiTable from "@/components/MovimentiTable"
-import ThemeToggle from "@/components/ThemeToggle"
+import AppHeader from "@/components/AppHeader"
 import AutoRefresh from "@/components/AutoRefresh"
 
 function YForkIcon() {
@@ -83,32 +82,24 @@ export default async function BrancaPage(props: PageProps<'/branca/[name]'>) {
 
   return (
     <div className="min-h-screen bg-slate-100 dark:bg-slate-900">
-      <header className="bg-slate-800 shadow-lg">
-        <div className="max-w-6xl mx-auto px-4 sm:px-8 py-4 sm:py-5 flex items-center gap-3 flex-wrap">
-          <img src="/logo-gruppo.png" alt="Logo" className="w-20 h-20 object-contain flex-shrink-0" style={{ mixBlendMode: "screen" }} />
-          <Link href={backHref} className="text-slate-400 hover:text-slate-200 text-base transition-colors">← Dashboard</Link>
-          <span className="text-slate-600">|</span>
-          <span className="text-2xl">{BRANCA_ICONS[branca]}</span>
-          <h1 className="text-xl font-bold text-white">{BRANCA_LABELS[branca]}</h1>
-          {annoName && (
-            <span className={`text-sm font-medium px-3 py-1.5 rounded-full ${
-              isAnnoAttivo
-                ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-                : "bg-orange-500/20 text-orange-300 border border-orange-500/30"
-            }`}>
-              {annoName}{!isAnnoAttivo && " — solo lettura"}
-            </span>
-          )}
-          {canEdit && (
-            <span className="text-sm bg-emerald-500/20 text-emerald-300 font-medium px-3 py-1.5 rounded-full border border-emerald-500/30">
-              ✏ Modificabile
-            </span>
-          )}
-          <span className="ml-auto">
-            <ThemeToggle />
+      <AppHeader backHref={backHref}>
+        <span className="text-2xl flex-shrink-0">{BRANCA_ICONS[branca]}</span>
+        <span className="font-bold text-white text-base">{BRANCA_LABELS[branca]}</span>
+        {annoName && (
+          <span className={`text-sm font-medium px-3 py-1 rounded-full flex-shrink-0 ${
+            isAnnoAttivo
+              ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+              : "bg-orange-500/20 text-orange-300 border border-orange-500/30"
+          }`}>
+            {annoName}{!isAnnoAttivo && " — solo lettura"}
           </span>
-        </div>
-      </header>
+        )}
+        {canEdit && (
+          <span className="text-sm bg-emerald-500/20 text-emerald-300 font-medium px-3 py-1 rounded-full border border-emerald-500/30 flex-shrink-0">
+            ✏ Modificabile
+          </span>
+        )}
+      </AppHeader>
 
       <main className="max-w-6xl mx-auto px-2 sm:px-6 py-4 sm:py-8">
         <AutoRefresh intervalMs={10000} />

@@ -9,7 +9,7 @@ import { BRANCHE, BRANCA_LABELS, Branca } from "@/types"
 import Link from "next/link"
 import SignOutButton from "@/components/SignOutButton"
 import AnnoSelector from "@/components/AnnoSelector"
-import ThemeToggle from "@/components/ThemeToggle"
+import AppHeader from "@/components/AppHeader"
 import { Suspense } from "react"
 
 function YForkIcon() {
@@ -88,35 +88,19 @@ export default async function DashboardPage(props: PageProps<'/dashboard'>) {
 
   return (
     <div className="min-h-screen bg-slate-100 dark:bg-slate-900">
-      <header className="bg-slate-800 shadow-lg">
-        <div className="max-w-5xl mx-auto px-4 sm:px-8 py-4 sm:py-6 flex justify-between items-center">
-          <div className="flex items-center gap-5">
-            <img
-              src="/logo-gruppo.png"
-              alt="Gruppo Scout Cologno 1"
-              className="w-28 h-28 object-contain flex-shrink-0"
-              style={{ mixBlendMode: "screen" }}
-            />
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold text-white leading-tight">Nota Spese</h1>
-                <span className="text-xs font-bold bg-orange-500 text-white px-2 py-0.5 rounded-full">DEV</span>
-              </div>
-              <p className="text-base text-slate-400 leading-tight mt-0.5">Gruppo Scout Cologno 1</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
+      <AppHeader
+        rightContent={
+          <>
             {admin && (
               <Link href="/admin" className="text-sm text-emerald-400 hover:text-emerald-300 font-medium transition-colors">
                 ⚙ Admin
               </Link>
             )}
             <span className="text-sm text-slate-400 hidden sm:block">{session.user?.name}</span>
-            <ThemeToggle />
             <SignOutButton />
-          </div>
-        </div>
-      </header>
+          </>
+        }
+      />
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
         {!config.annoAttivo && admin && (

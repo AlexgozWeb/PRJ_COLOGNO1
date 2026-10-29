@@ -5,8 +5,7 @@ import { authOptions } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { isAdmin } from "@/lib/config"
 import { getAllLogs } from "@/lib/logger"
-import Link from "next/link"
-import ThemeToggle from "@/components/ThemeToggle"
+import AppHeader from "@/components/AppHeader"
 import LogActions from "@/components/LogActions"
 
 const TIPO_COLORS: Record<string, string> = {
@@ -26,18 +25,10 @@ export default async function LogPage() {
 
   return (
     <div className="min-h-screen bg-slate-100 dark:bg-slate-900">
-      <header className="bg-slate-800 shadow-lg">
-        <div className="max-w-6xl mx-auto px-8 py-5 flex items-center gap-4">
-          <img src="/logo-gruppo.png" alt="Logo" className="w-16 h-16 object-contain flex-shrink-0" style={{ mixBlendMode: "screen" }} />
-          <Link href="/admin" className="text-slate-400 hover:text-slate-200 text-sm transition-colors">← Admin</Link>
-          <span className="text-slate-600">|</span>
-          <span className="text-lg">🔴</span>
-          <h1 className="text-base font-bold text-white">Log Errori</h1>
-          <span className="ml-auto flex items-center gap-3">
-            <ThemeToggle />
-          </span>
-        </div>
-      </header>
+      <AppHeader backHref="/admin" backLabel="Admin">
+        <span className="text-lg flex-shrink-0">🔴</span>
+        <span className="text-base font-bold text-white">Log Errori</span>
+      </AppHeader>
 
       <main className="max-w-6xl mx-auto px-6 py-8">
         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700">
