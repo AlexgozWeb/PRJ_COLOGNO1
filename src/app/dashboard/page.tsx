@@ -98,7 +98,10 @@ export default async function DashboardPage(props: PageProps<'/dashboard'>) {
               style={{ mixBlendMode: "screen" }}
             />
             <div>
-              <h1 className="text-2xl font-bold text-white leading-tight">Nota Spese</h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-bold text-white leading-tight">Nota Spese</h1>
+                <span className="text-xs font-bold bg-orange-500 text-white px-2 py-0.5 rounded-full">DEV</span>
+              </div>
               <p className="text-base text-slate-400 leading-tight mt-0.5">Gruppo Scout Cologno 1</p>
             </div>
           </div>
