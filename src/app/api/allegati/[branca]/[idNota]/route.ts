@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth"
 import { getConfig, isAdmin, getUserPermessi, getAnnoAttivoName } from "@/lib/config"
 import { uploadAllegato, listAllegati, deleteAllegato, parseAnnoFromFileName } from "@/lib/blob"
 import { logError } from "@/lib/logger"
+import { setAllegatiFlag } from "@/lib/sheets"
 import { Branca } from "@/types"
 
 const BRANCHE_VALIDE: Branca[] = ['LC', 'CdA', 'EG', 'Novi', 'Clan', 'CoCa', 'Gruppo']
@@ -30,6 +31,15 @@ async function getAnno(annoAttivoId: string): Promise<string | null> {
   const name = await getAnnoAttivoName(annoAttivoId)
   const anno = parseAnnoFromFileName(name)
   return anno || null
+}
+
+// Un errore sul flag non deve annullare un'operazione sugli allegati già riuscita
+async function syncAllegatiFlag(spreadsheetId: string, branca: Branca, idNota: string, value: boolean) {
+  try {
+    await setAllegatiFlag(spreadsheetId, branca, idNota, value)
+  } catch (e) {
+    await logError({ tipo: "Sheets", route: `allegati flag ${branca}/${idNota}`, branca, messaggio: `Aggiornamento colonna Allegati fallito: ${e instanceof Error ? e.message : "errore"}`, stack: e instanceof Error ? e.stack : undefined })
+  }
 }
 
 export async function GET(
@@ -83,6 +93,7 @@ export async function POST(
 
     const buffer = Buffer.from(await file.arrayBuffer())
     const allegato = await uploadAllegato(anno, branca as Branca, idNota, file.name, file.type, buffer)
+    await syncAllegatiFlag(config.annoAttivo, branca as Branca, idNota, true)
 
     return Response.json({ success: true, allegato })
   } catch (e) {
@@ -96,7 +107,7 @@ export async function DELETE(
   req: NextRequest,
   ctx: { params: Promise<{ branca: string; idNota: string }> }
 ) {
-  const { branca } = await ctx.params
+  const { branca, idNota } = await ctx.params
   try {
     if (!BRANCHE_VALIDE.includes(branca as Branca)) return errResponse("Branca non valida", 400)
     const auth = await checkAuth(branca as Branca, true)
@@ -106,6 +117,13 @@ export async function DELETE(
     if (!fileUrl) return errResponse("fileUrl mancante", 400)
 
     await deleteAllegato(fileUrl)
+
+    const config = await getConfig()
+    const anno = config.annoAttivo ? await getAnno(config.annoAttivo) : null
+    if (anno) {
+      const rimasti = await listAllegati(anno, branca as Branca, idNota)
+      await syncAllegatiFlag(config.annoAttivo, branca as Branca, idNota, rimasti.length > 0)
+    }
     return Response.json({ success: true })
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Errore interno"

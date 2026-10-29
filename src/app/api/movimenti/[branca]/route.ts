@@ -1,8 +1,8 @@
 import { NextRequest } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
-import { getConfig, isAdmin, getUserPermessi, getAnnoAttivoName } from "@/lib/config"
-import { getMovimenti, addMovimento, updateMovimento, deleteMovimento } from "@/lib/sheets"
+import { getConfig, isAdmin, getUserPermessi, getAnnoAttivoName, getListeValori } from "@/lib/config"
+import { getMovimenti, addMovimento, updateMovimento, deleteMovimento, StaleRowError } from "@/lib/sheets"
 import { deleteNotaAllegati, parseAnnoFromFileName } from "@/lib/blob"
 import { logError } from "@/lib/logger"
 import { Branca } from "@/types"
@@ -27,6 +27,12 @@ async function checkAuth(branca: Branca, requireWrite = false) {
 
 function errResponse(msg: string, status = 500) {
   return Response.json({ error: msg }, { status })
+}
+
+async function inOutValido(v: unknown): Promise<boolean> {
+  if (typeof v !== "string" || !v) return false
+  const { inOut } = await getListeValori()
+  return inOut.some(x => x.valore.toLowerCase() === v.toLowerCase())
 }
 
 export async function GET(
@@ -66,6 +72,7 @@ export async function POST(
     if (!auth) return errResponse("Non autorizzato", 401)
 
     const body = await req.json()
+    if (!(await inOutValido(body.inOut))) return errResponse("In/Out obbligatorio (scegli un valore della lista)", 400)
     const config = await getConfig()
     if (!config.annoAttivo) return errResponse("Anno attivo non configurato")
 
@@ -92,6 +99,7 @@ export async function PUT(
 
     const { rowNumber, ...data } = await req.json()
     if (!rowNumber) return errResponse("rowNumber mancante", 400)
+    if (!(await inOutValido(data.inOut))) return errResponse("In/Out obbligatorio (scegli un valore della lista)", 400)
 
     const config = await getConfig()
     if (!config.annoAttivo) return errResponse("Anno attivo non configurato")
@@ -123,20 +131,23 @@ export async function DELETE(
     const config = await getConfig()
     if (!config.annoAttivo) return errResponse("Anno attivo non configurato")
 
-    await deleteMovimento(config.annoAttivo, branca as Branca, rowNumber)
+    await deleteMovimento(config.annoAttivo, branca as Branca, rowNumber, idNota || undefined)
 
+    let warning: string | undefined
     if (idNota) {
       try {
         const spreadsheetName = await getAnnoAttivoName(config.annoAttivo)
         const annoFolder = parseAnnoFromFileName(spreadsheetName)
         if (annoFolder) await deleteNotaAllegati(annoFolder, branca as Branca, idNota)
       } catch (e) {
+        warning = `Nota eliminata, ma gli allegati (${idNota}) non sono stati rimossi da Vercel Blob. Contatta l'amministratore.`
         await logError({ tipo: "App", route: `DELETE /api/movimenti/${branca}`, branca, messaggio: `Eliminazione allegati blob fallita per ${idNota}`, stack: e instanceof Error ? e.stack : undefined })
       }
     }
 
-    return Response.json({ success: true })
+    return Response.json({ success: true, warning })
   } catch (e) {
+    if (e instanceof StaleRowError) return errResponse(e.message, 409)
     const msg = e instanceof Error ? e.message : "Errore interno"
     await logError({ tipo: "Sheets", route: `DELETE /api/movimenti/${branca}`, branca, messaggio: msg, stack: e instanceof Error ? e.stack : undefined })
     return errResponse(msg)

@@ -37,6 +37,7 @@ function rowToMovimento(row: string[], sheetRowIndex: number): Movimento {
     note: row[7] || "",
     status: row[8] || "",
     idNota: row[9] || "",
+    allegati: (row[10] || "").trim().toUpperCase() === "TRUE",
   }
 }
 
@@ -56,7 +57,7 @@ export async function getMovimenti(spreadsheetId: string, branca: Branca): Promi
   const sheets = getSheetsClient()
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId,
-    range: `${branca}!A1:J`,
+    range: `${branca}!A1:K`,
   })
   const rows = (response.data.values || []) as string[][]
   return rows
@@ -108,6 +109,25 @@ export async function addMovimento(
   return { idNota }
 }
 
+export async function setAllegatiFlag(
+  spreadsheetId: string,
+  branca: Branca,
+  idNota: string,
+  hasAllegati: boolean
+): Promise<void> {
+  const movimenti = await getMovimenti(spreadsheetId, branca)
+  const movimento = movimenti.find(m => m.idNota === idNota)
+  if (!movimento || movimento.allegati === hasAllegati) return
+
+  const sheets = getSheetsClient()
+  await sheets.spreadsheets.values.update({
+    spreadsheetId,
+    range: `${branca}!K${movimento.id}`,
+    valueInputOption: "USER_ENTERED",
+    requestBody: { values: [[hasAllegati]] },
+  })
+}
+
 export async function updateMovimento(
   spreadsheetId: string,
   branca: Branca,
@@ -137,68 +157,62 @@ export async function updateMovimento(
 export async function deleteMovimento(
   spreadsheetId: string,
   branca: Branca,
-  rowNumber: number
+  rowNumber: number,
+  expectedIdNota?: string
 ): Promise<void> {
   const sheets = getSheetsClient()
-  const spreadsheet = await sheets.spreadsheets.get({ spreadsheetId })
-  const sheet = spreadsheet.data.sheets?.find(s => s.properties?.title === branca)
-  const sheetId = sheet?.properties?.sheetId
 
-  if (sheetId === undefined) throw new Error(`Sheet ${branca} non trovato`)
+  // La pagina può essere obsoleta: la riga deve ancora contenere la nota attesa
+  if (expectedIdNota) {
+    const check = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: `${branca}!J${rowNumber}`,
+    })
+    const current = (check.data.values?.[0]?.[0] ?? "").toString().trim()
+    if (current !== expectedIdNota) throw new StaleRowError()
+  }
 
-  // 1. Cancella la riga
-  await sheets.spreadsheets.batchUpdate({
-    spreadsheetId,
-    requestBody: {
-      requests: [{
-        deleteDimension: {
-          range: {
-            sheetId,
-            dimension: "ROWS",
-            startIndex: rowNumber - 1, // 0-based
-            endIndex: rowNumber,
-          },
-        },
-      }],
-    },
-  })
+  const movimenti = await getMovimenti(spreadsheetId, branca)
+  const lastDataRow = movimenti.length > 0 ? movimenti[movimenti.length - 1].id : rowNumber
+  const last = Math.max(lastDataRow, rowNumber)
 
-  // 2. Reinserisci una riga vuota dopo l'ultimo dato (ripristina le righe pre-formattate)
-  //    inheritFromBefore: false → copia formato dalla riga sotto (prima riga pre-formattata)
-  const remaining = await getMovimenti(spreadsheetId, branca)
-  const lastDataRow = remaining.length > 0 ? remaining[remaining.length - 1].id : rowNumber - 1
-  await sheets.spreadsheets.batchUpdate({
-    spreadsheetId,
-    requestBody: {
-      requests: [{
-        insertDimension: {
-          range: {
-            sheetId,
-            dimension: "ROWS",
-            startIndex: lastDataRow, // 0-based = inserisce alla riga 1-based lastDataRow+1
-            endIndex: lastDataRow + 1,
-          },
-          inheritFromBefore: false, // copia formato dalla riga pre-formattata sotto
-        },
-      }],
-    },
-  })
+  // Valori grezzi di B:K dalla riga successiva a quella eliminata fino all'ultima nota
+  let below: unknown[][] = []
+  if (last > rowNumber) {
+    const res = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: `${branca}!B${rowNumber + 1}:K${last}`,
+      valueRenderOption: "UNFORMATTED_VALUE",
+    })
+    below = (res.data.values || []) as unknown[][]
+  }
 
-  // 3. Rinumera la colonna A (righe dati + nuova riga vuota appena inserita)
-  const newEmptyRow = lastDataRow + 1 // riga 1-based della nuova riga vuota inserita
-  const renumberData = remaining.map((m, i) => ({
-    range: `${branca}!A${m.id}`,
-    values: [[i + 1]],
-  }))
-  renumberData.push({
-    range: `${branca}!A${newEmptyRow}`,
-    values: [[remaining.length + 1]],
-  })
+  // Colonne B:K → B:H (dati) e J:K (ID_NOTA, Allegati); I (Status, formula) non viene toccata
+  const cell = (row: unknown[] | undefined, i: number) => row?.[i] ?? ""
+  const count = last - rowNumber + 1
+  const dataBlock: unknown[][] = []
+  const idBlock: unknown[][] = []
+  for (let i = 0; i < count; i++) {
+    const src = below[i] // undefined per l'ultima riga: viene svuotata
+    dataBlock.push([0, 1, 2, 3, 4, 5, 6].map(c => cell(src, c)))
+    idBlock.push([8, 9].map(c => cell(src, c)))
+  }
+
   await sheets.spreadsheets.values.batchUpdate({
     spreadsheetId,
     requestBody: {
-      valueInputOption: "RAW",
-      data: renumberData,
+      valueInputOption: "USER_ENTERED",
+      data: [
+        { range: `${branca}!B${rowNumber}:H${last}`, values: dataBlock },
+        { range: `${branca}!J${rowNumber}:K${last}`, values: idBlock },
+      ],
     },
   })
+}
+
+export class StaleRowError extends Error {
+  constructor() {
+    super("Impossibile cancellare la transazione: la posizione delle note è cambiata per un accesso simultaneo di un altro utente. Chiudi la finestra, attendi l'aggiornamento della pagina e riprova.")
+    this.name = "StaleRowError"
+  }
 }

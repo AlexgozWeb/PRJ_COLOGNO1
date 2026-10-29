@@ -4,7 +4,7 @@ import React from "react"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { redirect, notFound } from "next/navigation"
-import { getConfig, isAdmin, getUserPermessi, getAnnoAttivoName } from "@/lib/config"
+import { getConfig, isAdmin, getUserPermessi, getAnnoAttivoName, getListeValori } from "@/lib/config"
 import { getMovimenti } from "@/lib/sheets"
 import { BRANCHE, BRANCA_LABELS, Branca } from "@/types"
 import MovimentiTable from "@/components/MovimentiTable"
@@ -63,10 +63,11 @@ export default async function BrancaPage(props: PageProps<'/branca/[name]'>) {
   if (!session?.user?.email) redirect("/login")
 
   const email = session.user.email!
-  const [config, admin, permessi] = await Promise.all([
+  const [config, admin, permessi, liste] = await Promise.all([
     getConfig(),
     isAdmin(email),
     getUserPermessi(email),
+    getListeValori(),
   ])
 
   const fileId = (searchParams?.fileId as string) || config.annoAttivo
@@ -103,7 +104,7 @@ export default async function BrancaPage(props: PageProps<'/branca/[name]'>) {
 
       <main className="max-w-6xl mx-auto px-2 sm:px-6 py-4 sm:py-8">
         <AutoRefresh intervalMs={10000} />
-        <MovimentiTable movimenti={movimenti} branca={branca} canEdit={canEdit} maxAttachmentSizeMb={config.maxAttachmentSizeMb} />
+        <MovimentiTable movimenti={movimenti} branca={branca} canEdit={canEdit} maxAttachmentSizeMb={config.maxAttachmentSizeMb} liste={liste} />
       </main>
     </div>
   )

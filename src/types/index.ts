@@ -1,11 +1,16 @@
 export type Branca = 'LC' | 'CdA' | 'EG' | 'Novi' | 'Clan' | 'CoCa' | 'Gruppo'
-export type InOut = 'Entrata' | 'Uscita'
-export type Modalita = 'Carta' | 'Contanti'
-export type Fondo = 'Distintivi' | 'Materiale' | 'Pernotti' | 'VdB' | 'Altro'
 
-export const IN_OUT: InOut[] = ['Entrata', 'Uscita']
-export const MODALITA: Modalita[] = ['Carta', 'Contanti']
-export const FONDI: Fondo[] = ['Distintivi', 'Materiale', 'Pernotti', 'VdB', 'Altro']
+export interface ValoreLista {
+  valore: string
+  textColor: string  // esadecimale, "" se non definito
+  bgColor: string
+}
+
+export interface ListeValori {
+  inOut: ValoreLista[]
+  modalita: ValoreLista[]
+  fondo: ValoreLista[]
+}
 
 export const BRANCHE: Branca[] = ['LC', 'CdA', 'EG', 'Novi', 'Clan', 'CoCa', 'Gruppo']
 
@@ -41,6 +46,7 @@ export interface Movimento {
   note: string
   status: string
   idNota: string   // colonna J: codice univoco allegati (es. BLC001)
+  allegati: boolean // colonna K: TRUE se la nota ha almeno un allegato
 }
 
 export interface Permessi {

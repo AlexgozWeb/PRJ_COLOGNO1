@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Movimento, Branca, MODALITA, FONDI } from "@/types"
+import { Movimento, Branca, ListeValori, ValoreLista } from "@/types"
 
 function todayISO(): string {
   return new Date().toISOString().split("T")[0]
@@ -42,7 +42,7 @@ interface FormData {
 
 const EMPTY_FORM: FormData = {
   data: fromInputDate(todayISO()),
-  inOut: "Uscita",
+  inOut: "",
   modalita: "",
   fondo: "",
   importo: "",
@@ -104,14 +104,29 @@ interface Props {
   branca: Branca
   canEdit: boolean
   maxAttachmentSizeMb: number
+  liste: ListeValori
 }
 
-export default function MovimentiTable({ movimenti, branca, canEdit, maxAttachmentSizeMb }: Props) {
+function findValore(list: ValoreLista[], v: string): ValoreLista | undefined {
+  return v ? list.find(x => x.valore.toLowerCase() === v.toLowerCase()) : undefined
+}
+
+function chipStyle(list: ValoreLista[], v: string): React.CSSProperties | undefined {
+  const x = findValore(list, v)
+  if (!x || (!x.textColor && !x.bgColor)) return undefined
+  return { color: x.textColor || undefined, backgroundColor: x.bgColor || undefined }
+}
+
+// Opzioni del menu: valori della lista + eventuale valore già salvato non più presente
+function optionsFor(list: ValoreLista[], current: string): string[] {
+  const values = list.map(x => x.valore)
+  return current && !findValore(list, current) ? [...values, current] : values
+}
+
+export default function MovimentiTable({ movimenti, branca, canEdit, maxAttachmentSizeMb, liste }: Props) {
   const router = useRouter()
 
   const [modal, setModal] = useState<"add" | "edit" | "delete" | "view" | null>(null)
-  const [confirmDeleteAllegatoUrl, setConfirmDeleteAllegatoUrl] = useState<string | null>(null)
-  const [deletingAllegato, setDeletingAllegato] = useState(false)
   const [selected, setSelected] = useState<Movimento | null>(null)
   const [form, setForm] = useState<FormData>(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
@@ -120,6 +135,8 @@ export default function MovimentiTable({ movimenti, branca, canEdit, maxAttachme
   // Allegati state
   const [pendingFiles, setPendingFiles] = useState<File[]>([])
   const [existingAllegati, setExistingAllegati] = useState<ExistingAllegato[]>([])
+  const [pendingDeletes, setPendingDeletes] = useState<string[]>([])
+  const [createdIdNota, setCreatedIdNota] = useState<string | null>(null)
   const [allegatiLoading, setAllegatiLoading] = useState(false)
   const [fileError, setFileError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -129,16 +146,26 @@ export default function MovimentiTable({ movimenti, branca, canEdit, maxAttachme
     setSelected(null)
     setError(null)
     setPendingFiles([])
+    setPendingDeletes([])
+    setCreatedIdNota(null)
     setExistingAllegati([])
     setFileError(null)
     setModal("add")
   }
 
   function openEdit(m: Movimento) {
-    setForm(movimentoToForm(m))
+    const f = movimentoToForm(m)
+    setForm({
+      ...f,
+      inOut: findValore(liste.inOut, f.inOut)?.valore ?? f.inOut,
+      modalita: findValore(liste.modalita, f.modalita)?.valore ?? f.modalita,
+      fondo: findValore(liste.fondo, f.fondo)?.valore ?? f.fondo,
+    })
     setSelected(m)
     setError(null)
     setPendingFiles([])
+    setPendingDeletes([])
+    setCreatedIdNota(null)
     setExistingAllegati([])
     setFileError(null)
     setModal("edit")
@@ -161,6 +188,8 @@ export default function MovimentiTable({ movimenti, branca, canEdit, maxAttachme
     setSelected(null)
     setError(null)
     setPendingFiles([])
+    setPendingDeletes([])
+    setCreatedIdNota(null)
     setExistingAllegati([])
     setFileError(null)
   }
@@ -204,16 +233,22 @@ export default function MovimentiTable({ movimenti, branca, canEdit, maxAttachme
     setPendingFiles(prev => prev.filter((_, i) => i !== idx))
   }
 
-  async function deleteExisting(fileUrl: string) {
-    if (!selected?.idNota) return
-    try {
-      const res = await fetch(`/api/allegati/${branca}/${selected.idNota}`, {
+  // L'eliminazione effettiva avviene solo al salvataggio
+  function markForDelete(fileUrl: string) {
+    setPendingDeletes(prev => [...prev, fileUrl])
+  }
+
+  async function deletePendingAllegati(idNota: string) {
+    for (const fileUrl of pendingDeletes) {
+      const res = await fetch(`/api/allegati/${branca}/${idNota}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ fileUrl }),
       })
-      if (res.ok) setExistingAllegati(prev => prev.filter(a => a.id !== fileUrl))
-    } catch {}
+      if (!res.ok) throw new Error(await parseError(res, "Errore eliminazione allegato"))
+      setPendingDeletes(prev => prev.filter(u => u !== fileUrl))
+      setExistingAllegati(prev => prev.filter(a => a.id !== fileUrl))
+    }
   }
 
   async function uploadPendingFiles(idNota: string) {
@@ -225,6 +260,7 @@ export default function MovimentiTable({ movimenti, branca, canEdit, maxAttachme
         const data = await res.json().catch(() => ({}))
         throw new Error(data.error || `Errore upload "${file.name}" (HTTP ${res.status})`)
       }
+      setPendingFiles(prev => prev.filter(f => f !== file))
     }
   }
 
@@ -243,15 +279,21 @@ export default function MovimentiTable({ movimenti, branca, canEdit, maxAttachme
       }
 
       if (modal === "add") {
-        const res = await fetch(`/api/movimenti/${branca}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        })
-        if (!res.ok) throw new Error(await parseError(res, "Errore nel salvataggio"))
-        const data = await res.json()
-        if (data.idNota && pendingFiles.length > 0) {
-          await uploadPendingFiles(data.idNota)
+        // Se la nota è già stata creata in un tentativo precedente, non la ricrea
+        let idNota = createdIdNota
+        if (!idNota) {
+          const res = await fetch(`/api/movimenti/${branca}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          })
+          if (!res.ok) throw new Error(await parseError(res, "Errore nel salvataggio"))
+          const data = await res.json()
+          idNota = data.idNota ?? null
+          setCreatedIdNota(idNota ?? "__created__")
+        }
+        if (idNota && idNota !== "__created__" && pendingFiles.length > 0) {
+          await uploadPendingFiles(idNota)
         }
       } else if (modal === "edit" && selected) {
         const res = await fetch(`/api/movimenti/${branca}`, {
@@ -260,8 +302,9 @@ export default function MovimentiTable({ movimenti, branca, canEdit, maxAttachme
           body: JSON.stringify({ rowNumber: selected.id, ...payload }),
         })
         if (!res.ok) throw new Error(await parseError(res, "Errore nel salvataggio"))
-        if (selected.idNota && pendingFiles.length > 0) {
-          await uploadPendingFiles(selected.idNota)
+        if (selected.idNota) {
+          await deletePendingAllegati(selected.idNota)
+          if (pendingFiles.length > 0) await uploadPendingFiles(selected.idNota)
         }
       }
 
@@ -285,8 +328,10 @@ export default function MovimentiTable({ movimenti, branca, canEdit, maxAttachme
         body: JSON.stringify({ rowNumber: selected.id, idNota: selected.idNota }),
       })
       if (!res.ok) throw new Error(await parseError(res, "Errore nell'eliminazione"))
+      const data = await res.json().catch(() => ({}))
       closeModal()
       refresh()
+      if (data.warning) window.alert(data.warning)
     } catch (e) {
       setError(e instanceof Error ? e.message : "Errore sconosciuto")
     } finally {
@@ -297,8 +342,6 @@ export default function MovimentiTable({ movimenti, branca, canEdit, maxAttachme
   const totaleEntrate = movimenti.filter(m => m.inOut === "Entrata").reduce((s, m) => s + m.importo, 0)
   const totaleUscite = movimenti.filter(m => m.inOut === "Uscita").reduce((s, m) => s + m.importo, 0)
   const saldo = totaleEntrate - totaleUscite
-
-  const hasAllegati = (m: Movimento) => !!m.idNota
 
   return (
     <>
@@ -325,6 +368,7 @@ export default function MovimentiTable({ movimenti, branca, canEdit, maxAttachme
               <thead>
                 <tr className="bg-slate-700 text-white">
                   <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide">#</th>
+                  <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide whitespace-nowrap">ID Nota</th>
                   <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide">Data</th>
                   <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide">In/Out</th>
                   <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide">Modalità</th>
@@ -340,22 +384,38 @@ export default function MovimentiTable({ movimenti, branca, canEdit, maxAttachme
                 {movimenti.map((m, idx) => (
                   <tr key={m.id} className={`border-t border-slate-100 dark:border-slate-700 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/20 transition-colors ${idx % 2 === 0 ? "bg-white dark:bg-slate-800" : "bg-slate-50/60 dark:bg-slate-700/50"}`}>
                     <td className="px-3 py-3 text-slate-400 dark:text-slate-500 font-mono">{m.numero}</td>
+                    <td className="px-3 py-3 text-slate-500 dark:text-slate-400 font-mono text-xs whitespace-nowrap">{m.idNota || <span className="text-slate-300 dark:text-slate-600">—</span>}</td>
                     <td className="px-3 py-3 text-slate-700 dark:text-slate-200 whitespace-nowrap font-medium">{m.data}</td>
                     <td className="px-3 py-3">
                       {m.inOut ? (
-                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                          m.inOut === "Entrata"
-                            ? "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300"
-                            : "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300"
-                        }`}>
+                        <span
+                          style={chipStyle(liste.inOut, m.inOut)}
+                          className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                            chipStyle(liste.inOut, m.inOut)
+                              ? ""
+                              : m.inOut === "Entrata"
+                                ? "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300"
+                                : "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300"
+                          }`}
+                        >
                           {m.inOut === "Entrata" ? "↑" : "↓"} {m.inOut}
                         </span>
                       ) : <span className="text-slate-300 dark:text-slate-600">—</span>}
                     </td>
-                    <td className="px-3 py-3 text-slate-600 dark:text-slate-300">{m.modalita || <span className="text-slate-300 dark:text-slate-600">—</span>}</td>
+                    <td className="px-3 py-3">
+                      {m.modalita ? (
+                        <span
+                          style={chipStyle(liste.modalita, m.modalita)}
+                          className={`text-xs font-semibold px-2 py-0.5 rounded-full ${chipStyle(liste.modalita, m.modalita) ? "" : "text-slate-600 dark:text-slate-300"}`}
+                        >{m.modalita}</span>
+                      ) : <span className="text-slate-300 dark:text-slate-600">—</span>}
+                    </td>
                     <td className="px-3 py-3">
                       {m.fondo ? (
-                        <span className="bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-full font-medium">{m.fondo}</span>
+                        <span
+                          style={chipStyle(liste.fondo, m.fondo)}
+                          className={`px-2 py-0.5 rounded-full font-medium ${chipStyle(liste.fondo, m.fondo) ? "" : "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300"}`}
+                        >{m.fondo}</span>
                       ) : <span className="text-slate-300 dark:text-slate-600">—</span>}
                     </td>
                     <td className={`px-3 py-3 text-right font-semibold tabular-nums whitespace-nowrap ${
@@ -367,9 +427,6 @@ export default function MovimentiTable({ movimenti, branca, canEdit, maxAttachme
                     <td className="px-3 py-3 text-slate-600 dark:text-slate-300 max-w-[180px] truncate">
                       <span className="flex items-center gap-1">
                         {m.note}
-                        {hasAllegati(m) && (
-                          <span className="text-slate-400 dark:text-slate-500 flex-shrink-0" title={`ID: ${m.idNota}`}>📎</span>
-                        )}
                       </span>
                     </td>
                     <td className="px-3 py-3 text-center">
@@ -386,9 +443,11 @@ export default function MovimentiTable({ movimenti, branca, canEdit, maxAttachme
                       <td className="px-3 py-3 text-right whitespace-nowrap">
                         <button
                           onClick={() => openView(m)}
-                          className="inline-flex text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors mr-2"
-                          title="Visualizza nota spesa"
+                          className="inline-flex items-center gap-1 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors mr-2"
+                          title={m.allegati ? "Presenza Allegati" : "Assenza Allegati"}
+                          aria-label="Visualizza nota spesa"
                         >
+                          <span className={`inline-block w-2 h-2 rounded-full ${m.allegati ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-500"}`} />
                           <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                             <polyline points="14 2 14 8 20 8"/>
@@ -464,15 +523,14 @@ export default function MovimentiTable({ movimenti, branca, canEdit, maxAttachme
                   />
                 </div>
                 <div>
-                  <label className={labelCls}>In/Out</label>
+                  <label className={labelCls}>In/Out <span className="text-red-500">*</span></label>
                   <select
                     value={form.inOut}
                     onChange={e => setForm(f => ({ ...f, inOut: e.target.value }))}
                     className={inputCls}
                   >
                     <option value="">—</option>
-                    <option value="Entrata">Entrata</option>
-                    <option value="Uscita">Uscita</option>
+                    {optionsFor(liste.inOut, form.inOut).map(v => <option key={v} value={v}>{v}</option>)}
                   </select>
                 </div>
               </div>
@@ -486,7 +544,7 @@ export default function MovimentiTable({ movimenti, branca, canEdit, maxAttachme
                     className={inputCls}
                   >
                     <option value="">—</option>
-                    {MODALITA.map(m => <option key={m} value={m}>{m}</option>)}
+                    {optionsFor(liste.modalita, form.modalita).map(m => <option key={m} value={m}>{m}</option>)}
                   </select>
                 </div>
                 <div>
@@ -497,7 +555,7 @@ export default function MovimentiTable({ movimenti, branca, canEdit, maxAttachme
                     className={inputCls}
                   >
                     <option value="">—</option>
-                    {FONDI.map(f => <option key={f} value={f}>{f}</option>)}
+                    {optionsFor(liste.fondo, form.fondo).map(f => <option key={f} value={f}>{f}</option>)}
                   </select>
                 </div>
               </div>
@@ -571,18 +629,18 @@ export default function MovimentiTable({ movimenti, branca, canEdit, maxAttachme
                 {modal === "edit" && (
                   allegatiLoading ? (
                     <p className="text-xs text-slate-400 italic">Caricamento allegati…</p>
-                  ) : existingAllegati.length > 0 ? (
+                  ) : existingAllegati.filter(a => !pendingDeletes.includes(a.id)).length > 0 ? (
                     <ul className="space-y-1">
-                      {existingAllegati.map(a => (
+                      {existingAllegati.filter(a => !pendingDeletes.includes(a.id)).map(a => (
                         <li key={a.id} className="flex items-center justify-between gap-2 text-xs bg-slate-50 dark:bg-slate-700 rounded-lg px-2 py-1.5">
                           <a href={a.id} target="_blank" rel="noopener noreferrer" className="truncate text-slate-700 dark:text-slate-200 hover:underline">
                             {a.mimeType === "application/pdf" ? "📄" : "🖼️"} {a.name}
                           </a>
                           <button
                             type="button"
-                            onClick={() => deleteExisting(a.id)}
+                            onClick={() => markForDelete(a.id)}
                             className="flex-shrink-0 text-red-400 hover:text-red-600 transition-colors"
-                            title="Elimina allegato"
+                            title="Elimina allegato (alla pressione di Salva)"
                           >
                             🗑
                           </button>
@@ -652,7 +710,7 @@ export default function MovimentiTable({ movimenti, branca, canEdit, maxAttachme
               </button>
               <button
                 onClick={handleSave}
-                disabled={saving || !form.data}
+                disabled={saving || !form.data || !findValore(liste.inOut, form.inOut)}
                 className="px-4 py-2 text-sm font-medium bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
               >
                 {saving ? "Salvataggio…" : "Salva"}
@@ -752,22 +810,6 @@ export default function MovimentiTable({ movimenti, branca, canEdit, maxAttachme
                       <a href={a.id} target="_blank" rel="noopener noreferrer" className="flex-1 text-sm text-slate-700 dark:text-slate-200 hover:underline truncate">
                         {a.mimeType === "application/pdf" ? "📄" : "🖼️"} {a.name}
                       </a>
-                      {/* Elimina */}
-                      {canEdit && (
-                        <button
-                          type="button"
-                          onClick={() => setConfirmDeleteAllegatoUrl(a.id)}
-                          title="Elimina allegato"
-                          className="flex-shrink-0 text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
-                        >
-                          <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="3 6 5 6 21 6"/>
-                            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                            <path d="M10 11v6"/><path d="M14 11v6"/>
-                            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-                          </svg>
-                        </button>
-                      )}
                     </li>
                   ))}
                 </ul>
@@ -778,44 +820,6 @@ export default function MovimentiTable({ movimenti, branca, canEdit, maxAttachme
             <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-700 flex justify-end bg-slate-50 dark:bg-slate-700 rounded-b-2xl sticky bottom-0 z-10">
               <button onClick={closeModal} className="px-4 py-2 text-sm text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors">
                 Chiudi
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Confirm delete allegato (da modal view) */}
-      {confirmDeleteAllegatoUrl && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-6 max-w-sm w-full">
-            <h3 className="font-semibold text-slate-800 dark:text-slate-100 mb-2">Elimina allegato</h3>
-            <p className="text-sm text-slate-600 dark:text-slate-400 mb-5">
-              Sei sicuro di voler eliminare <span className="font-medium text-slate-800 dark:text-slate-200">{existingAllegati.find(a => a.id === confirmDeleteAllegatoUrl)?.name}</span>? L&apos;operazione non è reversibile.
-            </p>
-            <div className="flex gap-3 justify-end">
-              <button onClick={() => setConfirmDeleteAllegatoUrl(null)} disabled={deletingAllegato} className="px-4 py-2 text-sm rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
-                Annulla
-              </button>
-              <button
-                onClick={async () => {
-                  if (!selected?.idNota || !confirmDeleteAllegatoUrl) return
-                  setDeletingAllegato(true)
-                  try {
-                    const res = await fetch(`/api/allegati/${branca}/${selected.idNota}`, {
-                      method: "DELETE",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ fileUrl: confirmDeleteAllegatoUrl }),
-                    })
-                    if (res.ok) setExistingAllegati(prev => prev.filter(a => a.id !== confirmDeleteAllegatoUrl))
-                  } finally {
-                    setDeletingAllegato(false)
-                    setConfirmDeleteAllegatoUrl(null)
-                  }
-                }}
-                disabled={deletingAllegato}
-                className="px-4 py-2 text-sm rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium transition-colors disabled:opacity-60"
-              >
-                {deletingAllegato ? "Eliminazione…" : "Elimina"}
               </button>
             </div>
           </div>
