@@ -2,8 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { AllegatoFile } from "@/lib/blob"
-import { Branca } from "@/types"
+import { AllegatoFile, Branca } from "@/types"
 
 interface Props {
   allegati: AllegatoFile[]

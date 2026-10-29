@@ -47,6 +47,12 @@ export interface Permessi {
   [email: string]: Record<Branca, boolean>
 }
 
+export interface AllegatoFile {
+  id: string      // URL pubblico del blob
+  name: string
+  mimeType: string
+}
+
 export interface Config {
   annoAttivo: string   // spreadsheet ID del file anno corrente
   adminEmails: string[]

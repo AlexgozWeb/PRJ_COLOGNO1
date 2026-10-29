@@ -1,11 +1,7 @@
 import { put, list, del } from "@vercel/blob"
-import { Branca, BRANCA_CODICE } from "@/types"
+import { Branca, BRANCA_CODICE, AllegatoFile } from "@/types"
 
-export interface AllegatoFile {
-  id: string    // URL pubblico del blob (usato come identificatore univoco)
-  name: string
-  mimeType: string
-}
+export type { AllegatoFile }
 
 /** Estrae i numeri di 4 cifre dal nome del file e li concatena. Es. "Bilancio 2026-2027" → "20262027" */
 export function parseAnnoFromFileName(name: string): string {
