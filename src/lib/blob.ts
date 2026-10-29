@@ -33,14 +33,20 @@ export async function uploadAllegato(
   return { id: blob.url, name: filename, mimeType }
 }
 
+function mimeFromExt(filename: string): string {
+  const ext = filename.split(".").pop()?.toLowerCase()
+  if (ext === "pdf") return "application/pdf"
+  if (ext === "png") return "image/png"
+  return "image/jpeg"
+}
+
 export async function listAllegati(anno: string, branca: Branca, idNota: string): Promise<AllegatoFile[]> {
   const prefix = notaPrefix(anno, branca, idNota)
   const { blobs } = await list({ prefix })
-  return blobs.map(b => ({
-    id: b.url,
-    name: b.pathname.split("/").pop() || b.pathname,
-    mimeType: b.contentType || "application/octet-stream",
-  }))
+  return blobs.map(b => {
+    const name = b.pathname.split("/").pop() || b.pathname
+    return { id: b.url, name, mimeType: mimeFromExt(name) }
+  })
 }
 
 export async function deleteAllegato(url: string): Promise<void> {
