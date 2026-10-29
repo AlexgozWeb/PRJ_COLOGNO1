@@ -1,4 +1,4 @@
-export type Branca = 'LC' | 'CdA' | 'EG' | 'Novi' | 'Clan' | 'CoCa'
+export type Branca = 'LC' | 'CdA' | 'EG' | 'Novi' | 'Clan' | 'CoCa' | 'Gruppo'
 export type InOut = 'Entrata' | 'Uscita'
 export type Modalita = 'Carta' | 'Contanti'
 export type Fondo = 'Distintivi' | 'Materiale' | 'Pernotti' | 'VdB' | 'Altro'
@@ -7,7 +7,7 @@ export const IN_OUT: InOut[] = ['Entrata', 'Uscita']
 export const MODALITA: Modalita[] = ['Carta', 'Contanti']
 export const FONDI: Fondo[] = ['Distintivi', 'Materiale', 'Pernotti', 'VdB', 'Altro']
 
-export const BRANCHE: Branca[] = ['LC', 'CdA', 'EG', 'Novi', 'Clan', 'CoCa']
+export const BRANCHE: Branca[] = ['LC', 'CdA', 'EG', 'Novi', 'Clan', 'CoCa', 'Gruppo']
 
 export const BRANCA_LABELS: Record<Branca, string> = {
   LC: 'Branca LC',
@@ -16,6 +16,7 @@ export const BRANCA_LABELS: Record<Branca, string> = {
   Novi: 'Noviziato',
   Clan: 'Clan',
   CoCa: 'Comunità Capi',
+  Gruppo: 'Gruppo',
 }
 
 export interface Movimento {

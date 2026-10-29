@@ -46,6 +46,16 @@ const BRANCA_ICONS: Record<Branca, React.ReactNode> = {
   Novi: "🥾",
   Clan: <YForkIcon />,
   CoCa: "⚜️",
+  Gruppo: <GruppoIcon />,
+}
+
+function GruppoIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="26" height="26">
+      <circle cx="12" cy="12" r="11" fill="#2563eb"/>
+      <text x="12" y="17" textAnchor="middle" fontSize="14" fontWeight="bold" fill="white" fontFamily="Arial, sans-serif">C</text>
+    </svg>
+  )
 }
 
 const BRANCA_COLORS: Record<Branca, string> = {
@@ -55,6 +65,7 @@ const BRANCA_COLORS: Record<Branca, string> = {
   Novi: "border-l-red-400",
   Clan: "border-l-red-400",
   CoCa: "border-l-blue-400",
+  Gruppo: "border-l-blue-400",
 }
 
 export default async function DashboardPage(props: PageProps<'/dashboard'>) {

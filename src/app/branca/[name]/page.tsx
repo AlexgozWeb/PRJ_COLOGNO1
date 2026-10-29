@@ -34,6 +34,15 @@ function WolfPawIcon() {
   )
 }
 
+function GruppoIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="22" height="22">
+      <circle cx="12" cy="12" r="11" fill="#2563eb"/>
+      <text x="12" y="17" textAnchor="middle" fontSize="14" fontWeight="bold" fill="white" fontFamily="Arial, sans-serif">C</text>
+    </svg>
+  )
+}
+
 const BRANCA_ICONS: Record<Branca, React.ReactNode> = {
   LC: "🐺",
   CdA: <WolfPawIcon />,
@@ -41,6 +50,7 @@ const BRANCA_ICONS: Record<Branca, React.ReactNode> = {
   Novi: "🥾",
   Clan: <YForkIcon />,
   CoCa: "⚜️",
+  Gruppo: <GruppoIcon />,
 }
 
 export default async function BrancaPage(props: PageProps<'/branca/[name]'>) {
