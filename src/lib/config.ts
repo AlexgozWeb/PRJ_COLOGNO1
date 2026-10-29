@@ -2,7 +2,7 @@ import { getSheetsClient, getDriveClient } from "./google-auth"
 import { Config, Permessi, Branca } from "@/types"
 
 const CONFIG_SHEET_ID = process.env.APP_CONFIG_SHEET_ID!
-const BRANCHE: Branca[] = ['LC', 'CdA', 'EG', 'Novi', 'Clan', 'CoCa']
+const BRANCHE: Branca[] = ['LC', 'CdA', 'EG', 'Novi', 'Clan', 'CoCa', 'Gruppo']
 
 export async function getConfig(): Promise<Config> {
   const sheets = getSheetsClient()
@@ -82,7 +82,7 @@ export async function getPermessi(): Promise<Permessi> {
 export async function setPermessi(email: string, branche: Partial<Record<Branca, boolean>>): Promise<void> {
   const sheets = getSheetsClient()
   const current = await getPermessi()
-  const existing = current[email] || { LC: false, CdA: false, EG: false, Novi: false, Clan: false, CoCa: false }
+  const existing = current[email] || { LC: false, CdA: false, EG: false, Novi: false, Clan: false, CoCa: false, Gruppo: false }
   const updated = { ...existing, ...branche }
 
   const response = await sheets.spreadsheets.values.get({
@@ -120,5 +120,5 @@ export async function isAdmin(email: string): Promise<boolean> {
 
 export async function getUserPermessi(email: string): Promise<Record<Branca, boolean>> {
   const permessi = await getPermessi()
-  return permessi[email] || { LC: false, CdA: false, EG: false, Novi: false, Clan: false, CoCa: false }
+  return permessi[email] || { LC: false, CdA: false, EG: false, Novi: false, Clan: false, CoCa: false, Gruppo: false }
 }

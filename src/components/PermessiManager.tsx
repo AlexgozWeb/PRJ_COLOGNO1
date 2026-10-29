@@ -160,5 +160,5 @@ export default function PermessiManager({ permessi: initialPermessi }: Props) {
 }
 
 function emptyPermessi(): Record<Branca, boolean> {
-  return { LC: false, CdA: false, EG: false, Novi: false, Clan: false, CoCa: false }
+  return { LC: false, CdA: false, EG: false, Novi: false, Clan: false, CoCa: false, Gruppo: false }
 }

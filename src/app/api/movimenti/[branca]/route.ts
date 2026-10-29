@@ -5,7 +5,7 @@ import { getConfig, isAdmin, getUserPermessi } from "@/lib/config"
 import { getMovimenti, addMovimento, updateMovimento, deleteMovimento } from "@/lib/sheets"
 import { Branca } from "@/types"
 
-const BRANCHE_VALIDE: Branca[] = ['LC', 'CdA', 'EG', 'Novi', 'Clan', 'CoCa']
+const BRANCHE_VALIDE: Branca[] = ['LC', 'CdA', 'EG', 'Novi', 'Clan', 'CoCa', 'Gruppo']
 
 async function checkAuth(branca: Branca, requireWrite = false) {
   const session = await getServerSession(authOptions)
