@@ -79,6 +79,8 @@ async function getOrCreateFolder(
   const res = await drive.files.list({
     q: `name='${name}' and '${parentId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
     fields: "files(id)",
+    supportsAllDrives: true,
+    includeItemsFromAllDrives: true,
   })
   if (res.data.files?.length) return res.data.files[0].id!
 
@@ -89,6 +91,7 @@ async function getOrCreateFolder(
       parents: [parentId],
     },
     fields: "id",
+    supportsAllDrives: true,
   })
   return created.data.id!
 }
@@ -123,6 +126,7 @@ export async function uploadAllegato(
       body: Readable.from(buffer),
     },
     fields: "id,name,mimeType",
+    supportsAllDrives: true,
   })
   return { id: res.data.id!, name: res.data.name!, mimeType: res.data.mimeType! }
 }
@@ -133,13 +137,15 @@ export async function listAllegati(notaFolderId: string): Promise<AllegatoFile[]
     q: `'${notaFolderId}' in parents and trashed=false`,
     fields: "files(id,name,mimeType)",
     orderBy: "name",
+    supportsAllDrives: true,
+    includeItemsFromAllDrives: true,
   })
   return (res.data.files || []) as AllegatoFile[]
 }
 
 export async function deleteAllegato(fileId: string): Promise<void> {
   const drive = getDriveClient()
-  await drive.files.delete({ fileId })
+  await drive.files.delete({ fileId, supportsAllDrives: true })
 }
 
 /** Elimina la cartella {idNota} (e tutto il suo contenuto) in Drive. */
@@ -150,10 +156,12 @@ export async function deleteNotaFolder(
 ): Promise<void> {
   const drive = getDriveClient()
   const brancaCode = BRANCA_CODICE[branca]
+  const listOpts = { supportsAllDrives: true, includeItemsFromAllDrives: true }
 
   const annoRes = await drive.files.list({
     q: `name='${annoFolderName}' and '${DRIVE_ALLEGATI_FOLDER_ID}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
     fields: "files(id)",
+    ...listOpts,
   })
   const annoFolderId = annoRes.data.files?.[0]?.id
   if (!annoFolderId) return
@@ -161,6 +169,7 @@ export async function deleteNotaFolder(
   const brancaRes = await drive.files.list({
     q: `name='${brancaCode}' and '${annoFolderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
     fields: "files(id)",
+    ...listOpts,
   })
   const brancaFolderId = brancaRes.data.files?.[0]?.id
   if (!brancaFolderId) return
@@ -168,11 +177,12 @@ export async function deleteNotaFolder(
   const notaRes = await drive.files.list({
     q: `name='${idNota}' and '${brancaFolderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
     fields: "files(id)",
+    ...listOpts,
   })
   const notaFolderId = notaRes.data.files?.[0]?.id
   if (!notaFolderId) return
 
-  await drive.files.delete({ fileId: notaFolderId })
+  await drive.files.delete({ fileId: notaFolderId, supportsAllDrives: true })
 }
 
 /** Trova l'ID della cartella nota se esiste già (senza crearla). */
@@ -183,10 +193,12 @@ export async function findNotaFolder(
 ): Promise<string | null> {
   const drive = getDriveClient()
   const brancaCode = BRANCA_CODICE[branca]
+  const listOpts = { supportsAllDrives: true, includeItemsFromAllDrives: true }
 
   const annoRes = await drive.files.list({
     q: `name='${annoFolderName}' and '${DRIVE_ALLEGATI_FOLDER_ID}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
     fields: "files(id)",
+    ...listOpts,
   })
   const annoFolderId = annoRes.data.files?.[0]?.id
   if (!annoFolderId) return null
@@ -194,6 +206,7 @@ export async function findNotaFolder(
   const brancaRes = await drive.files.list({
     q: `name='${brancaCode}' and '${annoFolderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
     fields: "files(id)",
+    ...listOpts,
   })
   const brancaFolderId = brancaRes.data.files?.[0]?.id
   if (!brancaFolderId) return null
@@ -201,6 +214,7 @@ export async function findNotaFolder(
   const notaRes = await drive.files.list({
     q: `name='${idNota}' and '${brancaFolderId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`,
     fields: "files(id)",
+    ...listOpts,
   })
   return notaRes.data.files?.[0]?.id || null
 }

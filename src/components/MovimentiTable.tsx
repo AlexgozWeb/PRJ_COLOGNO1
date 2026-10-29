@@ -196,11 +196,15 @@ export default function MovimentiTable({ movimenti, branca, canEdit }: Props) {
     setPendingFiles(prev => prev.filter((_, i) => i !== idx))
   }
 
-  async function deleteExisting(fileId: string) {
+  async function deleteExisting(fileUrl: string) {
     if (!selected?.idNota) return
     try {
-      const res = await fetch(`/api/allegati/${branca}/${selected.idNota}/${fileId}`, { method: "DELETE" })
-      if (res.ok) setExistingAllegati(prev => prev.filter(a => a.id !== fileId))
+      const res = await fetch(`/api/allegati/${branca}/${selected.idNota}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fileUrl }),
+      })
+      if (res.ok) setExistingAllegati(prev => prev.filter(a => a.id !== fileUrl))
     } catch {}
   }
 
@@ -550,9 +554,9 @@ export default function MovimentiTable({ movimenti, branca, canEdit }: Props) {
                     <ul className="space-y-1">
                       {existingAllegati.map(a => (
                         <li key={a.id} className="flex items-center justify-between gap-2 text-xs bg-slate-50 dark:bg-slate-700 rounded-lg px-2 py-1.5">
-                          <span className="truncate text-slate-700 dark:text-slate-200">
+                          <a href={a.id} target="_blank" rel="noopener noreferrer" className="truncate text-slate-700 dark:text-slate-200 hover:underline">
                             {a.mimeType === "application/pdf" ? "📄" : "🖼️"} {a.name}
-                          </span>
+                          </a>
                           <button
                             type="button"
                             onClick={() => deleteExisting(a.id)}
@@ -652,7 +656,7 @@ export default function MovimentiTable({ movimenti, branca, canEdit }: Props) {
               </p>
               {selected.idNota && (
                 <p className="text-xs text-orange-600 dark:text-orange-400 text-center mt-1">
-                  Verranno eliminati anche gli allegati su Drive.
+                  Verranno eliminati anche gli allegati dallo storage.
                 </p>
               )}
               <p className="text-xs text-red-600 dark:text-red-400 text-center mt-2">Questa operazione non è reversibile.</p>

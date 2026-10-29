@@ -2,13 +2,7 @@ import { NextRequest } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { getConfig, isAdmin, getUserPermessi, getAnnoAttivoName } from "@/lib/config"
-import {
-  getOrCreateNotaFolder,
-  findNotaFolder,
-  uploadAllegato,
-  listAllegati,
-  parseAnnoFromFileName,
-} from "@/lib/drive"
+import { uploadAllegato, listAllegati, deleteAllegato, parseAnnoFromFileName } from "@/lib/blob"
 import { logError } from "@/lib/logger"
 import { Branca } from "@/types"
 
@@ -33,6 +27,12 @@ async function checkAuth(branca: Branca, requireWrite = false) {
   return { email, isAdmin: false }
 }
 
+async function getAnno(annoAttivoId: string): Promise<string | null> {
+  const name = await getAnnoAttivoName(annoAttivoId)
+  const anno = parseAnnoFromFileName(name)
+  return anno || null
+}
+
 export async function GET(
   _req: NextRequest,
   ctx: { params: Promise<{ branca: string; idNota: string }> }
@@ -46,18 +46,14 @@ export async function GET(
     const config = await getConfig()
     if (!config.annoAttivo) return errResponse("Anno attivo non configurato")
 
-    const spreadsheetName = await getAnnoAttivoName(config.annoAttivo)
-    const annoFolder = parseAnnoFromFileName(spreadsheetName)
-    if (!annoFolder) return Response.json({ allegati: [] })
+    const anno = await getAnno(config.annoAttivo)
+    if (!anno) return Response.json({ allegati: [] })
 
-    const folderId = await findNotaFolder(branca as Branca, idNota, annoFolder)
-    if (!folderId) return Response.json({ allegati: [] })
-
-    const allegati = await listAllegati(folderId)
+    const allegati = await listAllegati(anno, branca as Branca, idNota)
     return Response.json({ allegati })
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Errore interno"
-    await logError({ tipo: "Drive", route: `GET /api/allegati/${branca}/${idNota}`, branca, messaggio: msg, stack: e instanceof Error ? e.stack : undefined })
+    await logError({ tipo: "App", route: `GET /api/allegati/${branca}/${idNota}`, branca, messaggio: msg, stack: e instanceof Error ? e.stack : undefined })
     return errResponse(msg)
   }
 }
@@ -82,18 +78,38 @@ export async function POST(
     if (!ALLOWED_MIME.has(file.type)) return errResponse("Tipo file non ammesso (solo JPG, PNG, PDF)", 400)
     if (file.size > MAX_SIZE) return errResponse("File troppo grande (max 1 MB)", 400)
 
-    const spreadsheetName = await getAnnoAttivoName(config.annoAttivo)
-    const annoFolder = parseAnnoFromFileName(spreadsheetName)
-    if (!annoFolder) return errResponse("Impossibile determinare l'anno dal file attivo")
+    const anno = await getAnno(config.annoAttivo)
+    if (!anno) return errResponse("Impossibile determinare l'anno dal file attivo")
 
-    const folderId = await getOrCreateNotaFolder(branca as Branca, idNota, annoFolder)
     const buffer = Buffer.from(await file.arrayBuffer())
-    const allegato = await uploadAllegato(folderId, file.name, file.type, buffer)
+    const allegato = await uploadAllegato(anno, branca as Branca, idNota, file.name, file.type, buffer)
 
     return Response.json({ success: true, allegato })
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Errore interno"
-    await logError({ tipo: "Drive", route: `POST /api/allegati/${branca}/${idNota}`, branca, messaggio: `Upload fallito: ${msg}`, stack: e instanceof Error ? e.stack : undefined })
+    await logError({ tipo: "App", route: `POST /api/allegati/${branca}/${idNota}`, branca, messaggio: `Upload fallito: ${msg}`, stack: e instanceof Error ? e.stack : undefined })
+    return errResponse(msg)
+  }
+}
+
+export async function DELETE(
+  req: NextRequest,
+  ctx: { params: Promise<{ branca: string; idNota: string }> }
+) {
+  const { branca } = await ctx.params
+  try {
+    if (!BRANCHE_VALIDE.includes(branca as Branca)) return errResponse("Branca non valida", 400)
+    const auth = await checkAuth(branca as Branca, true)
+    if (!auth) return errResponse("Non autorizzato", 401)
+
+    const { fileUrl } = await req.json()
+    if (!fileUrl) return errResponse("fileUrl mancante", 400)
+
+    await deleteAllegato(fileUrl)
+    return Response.json({ success: true })
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Errore interno"
+    await logError({ tipo: "App", route: `DELETE /api/allegati/${branca}`, branca, messaggio: `Eliminazione allegato fallita: ${msg}`, stack: e instanceof Error ? e.stack : undefined })
     return errResponse(msg)
   }
 }

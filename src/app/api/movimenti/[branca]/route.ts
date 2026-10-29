@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { getConfig, isAdmin, getUserPermessi, getAnnoAttivoName } from "@/lib/config"
 import { getMovimenti, addMovimento, updateMovimento, deleteMovimento } from "@/lib/sheets"
-import { deleteNotaFolder, parseAnnoFromFileName } from "@/lib/drive"
+import { deleteNotaAllegati, parseAnnoFromFileName } from "@/lib/blob"
 import { logError } from "@/lib/logger"
 import { Branca } from "@/types"
 
@@ -129,9 +129,9 @@ export async function DELETE(
       try {
         const spreadsheetName = await getAnnoAttivoName(config.annoAttivo)
         const annoFolder = parseAnnoFromFileName(spreadsheetName)
-        if (annoFolder) await deleteNotaFolder(branca as Branca, idNota, annoFolder)
+        if (annoFolder) await deleteNotaAllegati(annoFolder, branca as Branca, idNota)
       } catch (e) {
-        await logError({ tipo: "Drive", route: `DELETE /api/movimenti/${branca}`, branca, messaggio: `Eliminazione cartella Drive fallita per ${idNota}`, stack: e instanceof Error ? e.stack : undefined })
+        await logError({ tipo: "App", route: `DELETE /api/movimenti/${branca}`, branca, messaggio: `Eliminazione allegati blob fallita per ${idNota}`, stack: e instanceof Error ? e.stack : undefined })
       }
     }
 
