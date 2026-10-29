@@ -56,6 +56,7 @@ export interface AllegatoFile {
 export interface Config {
   annoAttivo: string   // spreadsheet ID del file anno corrente
   adminEmails: string[]
+  maxAttachmentSizeMb: number
 }
 
 export interface UserContext {

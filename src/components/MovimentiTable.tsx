@@ -92,7 +92,6 @@ const inputCls = "w-full border border-slate-200 dark:border-slate-600 rounded-l
 const labelCls = "block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1"
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "application/pdf"]
-const MAX_FILE_SIZE = 1 * 1024 * 1024 // 1 MB
 
 interface ExistingAllegato {
   id: string
@@ -104,9 +103,10 @@ interface Props {
   movimenti: Movimento[]
   branca: Branca
   canEdit: boolean
+  maxAttachmentSizeMb: number
 }
 
-export default function MovimentiTable({ movimenti, branca, canEdit }: Props) {
+export default function MovimentiTable({ movimenti, branca, canEdit, maxAttachmentSizeMb }: Props) {
   const router = useRouter()
 
   const [modal, setModal] = useState<"add" | "edit" | "delete" | "view" | null>(null)
@@ -190,8 +190,8 @@ export default function MovimentiTable({ movimenti, branca, canEdit }: Props) {
         setFileError(`"${f.name}": tipo non ammesso (solo JPG, PNG, PDF)`)
         continue
       }
-      if (f.size > MAX_FILE_SIZE) {
-        setFileError(`"${f.name}": troppo grande (max 1 MB)`)
+      if (f.size > maxAttachmentSizeMb * 1024 * 1024) {
+        setFileError(`"${f.name}": troppo grande (max ${maxAttachmentSizeMb} MB)`)
         continue
       }
       valid.push(f)
@@ -619,7 +619,7 @@ export default function MovimentiTable({ movimenti, branca, canEdit }: Props) {
                 )}
 
                 <p className="text-xs text-slate-400 dark:text-slate-500">
-                  JPG, PNG o PDF · max 1 MB per file
+                  JPG, PNG o PDF · max {maxAttachmentSizeMb} MB per file
                 </p>
               </div>
 

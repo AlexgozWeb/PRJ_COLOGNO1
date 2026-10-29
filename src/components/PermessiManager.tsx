@@ -31,7 +31,10 @@ export default function PermessiManager({ permessi: initialPermessi }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, branche }),
       })
-      if (!res.ok) throw new Error((await res.json()).error || "Errore nel salvataggio")
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error || `Errore nel salvataggio (HTTP ${res.status})`)
+      }
       refresh()
     } catch (e) {
       setError(e instanceof Error ? e.message : "Errore sconosciuto")

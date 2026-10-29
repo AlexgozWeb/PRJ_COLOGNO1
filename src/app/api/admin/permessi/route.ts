@@ -2,6 +2,7 @@ import { NextRequest } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { isAdmin, getPermessi, setPermessi } from "@/lib/config"
+import { logError } from "@/lib/logger"
 import { Branca } from "@/types"
 
 async function checkAdmin() {
@@ -23,9 +24,15 @@ export async function POST(req: NextRequest) {
   const admin = await checkAdmin()
   if (!admin) return Response.json({ error: "Non autorizzato" }, { status: 401 })
 
-  const { email, branche }: { email: string; branche: Partial<Record<Branca, boolean>> } = await req.json()
-  if (!email) return Response.json({ error: "Email mancante" }, { status: 400 })
+  try {
+    const { email, branche }: { email: string; branche: Partial<Record<Branca, boolean>> } = await req.json()
+    if (!email) return Response.json({ error: "Email mancante" }, { status: 400 })
 
-  await setPermessi(email, branche)
-  return Response.json({ success: true })
+    await setPermessi(email, branche)
+    return Response.json({ success: true })
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Errore interno"
+    await logError({ tipo: "Sheets", route: "POST /api/admin/permessi", utente: admin, messaggio: msg, stack: e instanceof Error ? e.stack : undefined })
+    return Response.json({ error: msg }, { status: 500 })
+  }
 }

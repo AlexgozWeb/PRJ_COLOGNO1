@@ -1,25 +1,35 @@
 import { getSheetsClient, getDriveClient } from "./google-auth"
+import { unstable_cache, revalidateTag } from "next/cache"
 import { Config, Permessi, Branca } from "@/types"
 
 const CONFIG_SHEET_ID = process.env.APP_CONFIG_SHEET_ID!
 const BRANCHE: Branca[] = ['LC', 'CdA', 'EG', 'Novi', 'Clan', 'CoCa', 'Gruppo']
+const DEFAULT_MAX_ATTACHMENT_MB = 1
 
-export async function getConfig(): Promise<Config> {
-  const sheets = getSheetsClient()
-  const response = await sheets.spreadsheets.values.get({
-    spreadsheetId: CONFIG_SHEET_ID,
-    range: "Impostazioni!A1:B2",
-  })
-  const rows = (response.data.values || []) as string[][]
+export const getConfig = unstable_cache(
+  async (): Promise<Config> => {
+    const sheets = getSheetsClient()
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: CONFIG_SHEET_ID,
+      range: "Impostazioni!A:B",
+    })
+    const rows = (response.data.values || []) as string[][]
 
-  const annoAttivo = rows[0]?.[1] || ""
-  const adminEmails = (rows[1]?.[1] || "")
-    .split(",")
-    .map(e => e.trim())
-    .filter(Boolean)
+    const annoAttivo = rows[0]?.[1] || ""
+    const adminEmails = (rows[1]?.[1] || "")
+      .split(",")
+      .map(e => e.trim())
+      .filter(Boolean)
 
-  return { annoAttivo, adminEmails }
-}
+    const maxRaw = rows.find(r => r[0]?.trim().toLowerCase() === "max_attachment_size_mb")?.[1]
+    const maxParsed = parseFloat((maxRaw || "").replace(",", "."))
+    const maxAttachmentSizeMb = maxParsed > 0 ? maxParsed : DEFAULT_MAX_ATTACHMENT_MB
+
+    return { annoAttivo, adminEmails, maxAttachmentSizeMb }
+  },
+  ["config"],
+  { revalidate: 60, tags: ["config"] }
+)
 
 export async function getAnnoAttivoName(fileId: string): Promise<string> {
   if (!fileId) return ""
@@ -54,30 +64,35 @@ export async function setAnnoAttivo(fileId: string): Promise<void> {
     valueInputOption: "RAW",
     requestBody: { values: [[fileId]] },
   })
+  revalidateTag("config", { expire: 0 })
 }
 
-export async function getPermessi(): Promise<Permessi> {
-  const sheets = getSheetsClient()
-  const response = await sheets.spreadsheets.values.get({
-    spreadsheetId: CONFIG_SHEET_ID,
-    range: "Permessi!A:G",
-  })
-  const rows = (response.data.values || []) as string[][]
-  if (rows.length < 2) return {}
-
-  const permessi: Permessi = {}
-  for (let i = 1; i < rows.length; i++) {
-    const row = rows[i]
-    const email = row[0]
-    if (!email) continue
-    const entry: Record<Branca, boolean> = {} as Record<Branca, boolean>
-    BRANCHE.forEach((branca, idx) => {
-      entry[branca] = row[idx + 1] === "TRUE" || row[idx + 1] === "✅" || row[idx + 1] === "true"
+export const getPermessi = unstable_cache(
+  async (): Promise<Permessi> => {
+    const sheets = getSheetsClient()
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: CONFIG_SHEET_ID,
+      range: "Permessi!A:H",
     })
-    permessi[email] = entry
-  }
-  return permessi
-}
+    const rows = (response.data.values || []) as string[][]
+    if (rows.length < 2) return {}
+
+    const permessi: Permessi = {}
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i]
+      const email = row[0]
+      if (!email) continue
+      const entry: Record<Branca, boolean> = {} as Record<Branca, boolean>
+      BRANCHE.forEach((branca, idx) => {
+        entry[branca] = row[idx + 1] === "TRUE" || row[idx + 1] === "✅" || row[idx + 1] === "true"
+      })
+      permessi[email] = entry
+    }
+    return permessi
+  },
+  ["permessi"],
+  { revalidate: 60, tags: ["permessi"] }
+)
 
 export async function setPermessi(email: string, branche: Partial<Record<Branca, boolean>>): Promise<void> {
   const sheets = getSheetsClient()
@@ -95,7 +110,7 @@ export async function setPermessi(email: string, branche: Partial<Record<Branca,
   if (rowIndex === -1) {
     await sheets.spreadsheets.values.append({
       spreadsheetId: CONFIG_SHEET_ID,
-      range: "Permessi!A:G",
+      range: "Permessi!A:H",
       valueInputOption: "RAW",
       requestBody: {
         values: [[email, ...BRANCHE.map(b => updated[b] ? "TRUE" : "FALSE")]],
@@ -104,13 +119,14 @@ export async function setPermessi(email: string, branche: Partial<Record<Branca,
   } else {
     await sheets.spreadsheets.values.update({
       spreadsheetId: CONFIG_SHEET_ID,
-      range: `Permessi!A${rowIndex + 1}:G${rowIndex + 1}`,
+      range: `Permessi!A${rowIndex + 1}:H${rowIndex + 1}`,
       valueInputOption: "RAW",
       requestBody: {
         values: [[email, ...BRANCHE.map(b => updated[b] ? "TRUE" : "FALSE")]],
       },
     })
   }
+  revalidateTag("permessi", { expire: 0 })
 }
 
 export async function isAdmin(email: string): Promise<boolean> {

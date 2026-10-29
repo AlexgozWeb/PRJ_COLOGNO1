@@ -8,7 +8,6 @@ import { Branca } from "@/types"
 
 const BRANCHE_VALIDE: Branca[] = ['LC', 'CdA', 'EG', 'Novi', 'Clan', 'CoCa', 'Gruppo']
 const ALLOWED_MIME = new Set(["image/jpeg", "image/png", "application/pdf"])
-const MAX_SIZE = 1 * 1024 * 1024 // 1 MB
 
 function errResponse(msg: string, status = 500) {
   return Response.json({ error: msg }, { status })
@@ -76,7 +75,8 @@ export async function POST(
     if (!file) return errResponse("File mancante", 400)
 
     if (!ALLOWED_MIME.has(file.type)) return errResponse("Tipo file non ammesso (solo JPG, PNG, PDF)", 400)
-    if (file.size > MAX_SIZE) return errResponse("File troppo grande (max 1 MB)", 400)
+    if (file.size > config.maxAttachmentSizeMb * 1024 * 1024)
+      return errResponse(`File troppo grande (max ${config.maxAttachmentSizeMb} MB)`, 400)
 
     const anno = await getAnno(config.annoAttivo)
     if (!anno) return errResponse("Impossibile determinare l'anno dal file attivo")
