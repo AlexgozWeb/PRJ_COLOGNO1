@@ -32,7 +32,17 @@ export default function AppHeader({ backHref, backLabel = "Dashboard", children,
           <div>
             <div className="flex items-center gap-2">
               <span className="text-lg font-bold text-white leading-tight">Nota Spese</span>
-              <span className="text-xs font-bold bg-orange-500 text-white px-2 py-0.5 rounded-full">DEV</span>
+              {process.env.ENVIRONMENT_CODE && (
+                <span
+                  className="text-xs font-bold px-2 py-0.5 rounded-full"
+                  style={{
+                    backgroundColor: process.env.ENVIRONMENT_BKG_COLOR || "#f97316",
+                    color: process.env.ENVIRONMENT_TXT_COLOR || "#ffffff",
+                  }}
+                >
+                  {process.env.ENVIRONMENT_CODE}
+                </span>
+              )}
             </div>
             <p className="text-xs text-slate-400 leading-tight mt-0.5">Gruppo Scout Cologno 1</p>
           </div>
