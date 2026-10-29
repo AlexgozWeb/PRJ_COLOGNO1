@@ -21,12 +21,12 @@ export default function AppHeader({ backHref, backLabel = "Dashboard", children,
     <header className="bg-slate-800 shadow-lg">
       <div className="max-w-6xl mx-auto px-4 sm:px-8 py-3 sm:py-4 flex items-center gap-4">
 
-        {/* Gruppo logo — sempre presente */}
-        <div className="flex items-center gap-3 flex-shrink-0">
+        {/* Gruppo logo — sempre presente, cliccabile → dashboard */}
+        <Link href="/dashboard" className="flex items-center gap-3 flex-shrink-0 group">
           <img
             src="/logo-gruppo.png"
             alt="Gruppo Scout Cologno 1"
-            className="w-16 h-16 object-contain"
+            className="w-16 h-16 object-contain transition-opacity group-hover:opacity-80"
             style={{ mixBlendMode: "screen" }}
           />
           <div>
@@ -46,7 +46,7 @@ export default function AppHeader({ backHref, backLabel = "Dashboard", children,
             </div>
             <p className="text-xs text-slate-400 leading-tight mt-0.5">Gruppo Scout Cologno 1</p>
           </div>
-        </div>
+        </Link>
 
         {/* Separatore verticale + contenuto pagina */}
         {children && (
