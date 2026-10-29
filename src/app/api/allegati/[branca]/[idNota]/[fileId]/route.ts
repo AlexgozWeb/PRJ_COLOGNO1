@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { isAdmin, getUserPermessi } from "@/lib/config"
 import { deleteAllegato } from "@/lib/drive"
+import { logError } from "@/lib/logger"
 import { Branca } from "@/types"
 
 const BRANCHE_VALIDE: Branca[] = ['LC', 'CdA', 'EG', 'Novi', 'Clan', 'CoCa', 'Gruppo']
@@ -15,8 +16,8 @@ export async function DELETE(
   _req: NextRequest,
   ctx: { params: Promise<{ branca: string; idNota: string; fileId: string }> }
 ) {
+  const { branca, fileId } = await ctx.params
   try {
-    const { branca, fileId } = await ctx.params
     if (!BRANCHE_VALIDE.includes(branca as Branca)) return errResponse("Branca non valida", 400)
 
     const session = await getServerSession(authOptions)
@@ -32,6 +33,8 @@ export async function DELETE(
     await deleteAllegato(fileId)
     return Response.json({ success: true })
   } catch (e) {
-    return errResponse(e instanceof Error ? e.message : "Errore interno")
+    const msg = e instanceof Error ? e.message : "Errore interno"
+    await logError({ tipo: "Drive", route: `DELETE /api/allegati/${branca}/${fileId}`, branca, messaggio: `Eliminazione allegato fallita: ${msg}`, stack: e instanceof Error ? e.stack : undefined })
+    return errResponse(msg)
   }
 }

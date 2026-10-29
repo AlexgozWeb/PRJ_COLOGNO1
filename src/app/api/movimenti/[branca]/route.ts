@@ -1,10 +1,10 @@
 import { NextRequest } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
-import { getConfig, isAdmin, getUserPermessi } from "@/lib/config"
+import { getConfig, isAdmin, getUserPermessi, getAnnoAttivoName } from "@/lib/config"
 import { getMovimenti, addMovimento, updateMovimento, deleteMovimento } from "@/lib/sheets"
 import { deleteNotaFolder, parseAnnoFromFileName } from "@/lib/drive"
-import { getAnnoAttivoName } from "@/lib/config"
+import { logError } from "@/lib/logger"
 import { Branca } from "@/types"
 
 const BRANCHE_VALIDE: Branca[] = ['LC', 'CdA', 'EG', 'Novi', 'Clan', 'CoCa', 'Gruppo']
@@ -26,7 +26,6 @@ async function checkAuth(branca: Branca, requireWrite = false) {
 }
 
 function errResponse(msg: string, status = 500) {
-  console.error(`[movimenti API] ${msg}`)
   return Response.json({ error: msg }, { status })
 }
 
@@ -34,8 +33,8 @@ export async function GET(
   _req: NextRequest,
   ctx: RouteContext<'/api/movimenti/[branca]'>
 ) {
+  const { branca } = await ctx.params
   try {
-    const { branca } = await ctx.params
     if (!BRANCHE_VALIDE.includes(branca as Branca))
       return errResponse("Branca non valida", 400)
 
@@ -48,7 +47,9 @@ export async function GET(
     const movimenti = await getMovimenti(config.annoAttivo, branca as Branca)
     return Response.json({ movimenti })
   } catch (e) {
-    return errResponse(e instanceof Error ? e.message : "Errore interno")
+    const msg = e instanceof Error ? e.message : "Errore interno"
+    await logError({ tipo: "Sheets", route: `GET /api/movimenti/${branca}`, branca, messaggio: msg, stack: e instanceof Error ? e.stack : undefined })
+    return errResponse(msg)
   }
 }
 
@@ -56,8 +57,8 @@ export async function POST(
   req: NextRequest,
   ctx: RouteContext<'/api/movimenti/[branca]'>
 ) {
+  const { branca } = await ctx.params
   try {
-    const { branca } = await ctx.params
     if (!BRANCHE_VALIDE.includes(branca as Branca))
       return errResponse("Branca non valida", 400)
 
@@ -71,7 +72,9 @@ export async function POST(
     const { idNota } = await addMovimento(config.annoAttivo, branca as Branca, body)
     return Response.json({ success: true, idNota })
   } catch (e) {
-    return errResponse(e instanceof Error ? e.message : "Errore interno")
+    const msg = e instanceof Error ? e.message : "Errore interno"
+    await logError({ tipo: "Sheets", route: `POST /api/movimenti/${branca}`, branca, messaggio: msg, stack: e instanceof Error ? e.stack : undefined })
+    return errResponse(msg)
   }
 }
 
@@ -79,8 +82,8 @@ export async function PUT(
   req: NextRequest,
   ctx: RouteContext<'/api/movimenti/[branca]'>
 ) {
+  const { branca } = await ctx.params
   try {
-    const { branca } = await ctx.params
     if (!BRANCHE_VALIDE.includes(branca as Branca))
       return errResponse("Branca non valida", 400)
 
@@ -96,7 +99,9 @@ export async function PUT(
     await updateMovimento(config.annoAttivo, branca as Branca, rowNumber, data)
     return Response.json({ success: true })
   } catch (e) {
-    return errResponse(e instanceof Error ? e.message : "Errore interno")
+    const msg = e instanceof Error ? e.message : "Errore interno"
+    await logError({ tipo: "Sheets", route: `PUT /api/movimenti/${branca}`, branca, messaggio: msg, stack: e instanceof Error ? e.stack : undefined })
+    return errResponse(msg)
   }
 }
 
@@ -104,8 +109,8 @@ export async function DELETE(
   req: NextRequest,
   ctx: RouteContext<'/api/movimenti/[branca]'>
 ) {
+  const { branca } = await ctx.params
   try {
-    const { branca } = await ctx.params
     if (!BRANCHE_VALIDE.includes(branca as Branca))
       return errResponse("Branca non valida", 400)
 
@@ -125,13 +130,15 @@ export async function DELETE(
         const spreadsheetName = await getAnnoAttivoName(config.annoAttivo)
         const annoFolder = parseAnnoFromFileName(spreadsheetName)
         if (annoFolder) await deleteNotaFolder(branca as Branca, idNota, annoFolder)
-      } catch {
-        // Non bloccare la risposta se Drive fallisce
+      } catch (e) {
+        await logError({ tipo: "Drive", route: `DELETE /api/movimenti/${branca}`, branca, messaggio: `Eliminazione cartella Drive fallita per ${idNota}`, stack: e instanceof Error ? e.stack : undefined })
       }
     }
 
     return Response.json({ success: true })
   } catch (e) {
-    return errResponse(e instanceof Error ? e.message : "Errore interno")
+    const msg = e instanceof Error ? e.message : "Errore interno"
+    await logError({ tipo: "Sheets", route: `DELETE /api/movimenti/${branca}`, branca, messaggio: msg, stack: e instanceof Error ? e.stack : undefined })
+    return errResponse(msg)
   }
 }

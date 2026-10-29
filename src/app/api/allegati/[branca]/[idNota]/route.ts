@@ -9,6 +9,7 @@ import {
   listAllegati,
   parseAnnoFromFileName,
 } from "@/lib/drive"
+import { logError } from "@/lib/logger"
 import { Branca } from "@/types"
 
 const BRANCHE_VALIDE: Branca[] = ['LC', 'CdA', 'EG', 'Novi', 'Clan', 'CoCa', 'Gruppo']
@@ -36,8 +37,8 @@ export async function GET(
   _req: NextRequest,
   ctx: { params: Promise<{ branca: string; idNota: string }> }
 ) {
+  const { branca, idNota } = await ctx.params
   try {
-    const { branca, idNota } = await ctx.params
     if (!BRANCHE_VALIDE.includes(branca as Branca)) return errResponse("Branca non valida", 400)
     const auth = await checkAuth(branca as Branca)
     if (!auth) return errResponse("Non autorizzato", 401)
@@ -55,7 +56,9 @@ export async function GET(
     const allegati = await listAllegati(folderId)
     return Response.json({ allegati })
   } catch (e) {
-    return errResponse(e instanceof Error ? e.message : "Errore interno")
+    const msg = e instanceof Error ? e.message : "Errore interno"
+    await logError({ tipo: "Drive", route: `GET /api/allegati/${branca}/${idNota}`, branca, messaggio: msg, stack: e instanceof Error ? e.stack : undefined })
+    return errResponse(msg)
   }
 }
 
@@ -63,8 +66,8 @@ export async function POST(
   req: NextRequest,
   ctx: { params: Promise<{ branca: string; idNota: string }> }
 ) {
+  const { branca, idNota } = await ctx.params
   try {
-    const { branca, idNota } = await ctx.params
     if (!BRANCHE_VALIDE.includes(branca as Branca)) return errResponse("Branca non valida", 400)
     const auth = await checkAuth(branca as Branca, true)
     if (!auth) return errResponse("Non autorizzato", 401)
@@ -89,6 +92,8 @@ export async function POST(
 
     return Response.json({ success: true, allegato })
   } catch (e) {
-    return errResponse(e instanceof Error ? e.message : "Errore interno")
+    const msg = e instanceof Error ? e.message : "Errore interno"
+    await logError({ tipo: "Drive", route: `POST /api/allegati/${branca}/${idNota}`, branca, messaggio: `Upload fallito: ${msg}`, stack: e instanceof Error ? e.stack : undefined })
+    return errResponse(msg)
   }
 }
