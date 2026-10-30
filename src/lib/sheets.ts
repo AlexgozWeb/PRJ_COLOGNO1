@@ -53,6 +53,18 @@ function generateIdNota(branca: Branca, existing: Movimento[]): string {
   return `${prefix}${String(max + 1).padStart(3, "0")}`
 }
 
+// Elenco delle branche con un foglio nel file; se la lettura fallisce le considera tutte presenti
+export async function getBrancheDisponibili(spreadsheetId: string, branche: Branca[]): Promise<Set<Branca>> {
+  try {
+    const sheets = getSheetsClient()
+    const res = await sheets.spreadsheets.get({ spreadsheetId, fields: "sheets.properties.title" })
+    const titles = new Set((res.data.sheets || []).map(s => (s.properties?.title || "").trim().toLowerCase()))
+    return new Set(branche.filter(b => titles.has(b.toLowerCase())))
+  } catch {
+    return new Set(branche)
+  }
+}
+
 export async function getMovimenti(spreadsheetId: string, branca: Branca): Promise<Movimento[]> {
   const sheets = getSheetsClient()
   const response = await sheets.spreadsheets.values.get({

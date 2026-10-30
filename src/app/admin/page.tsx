@@ -3,9 +3,10 @@ export const instant = false
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { redirect } from "next/navigation"
-import { isAdmin, getConfig, getPermessi, getAnnoAttivoName, listBilanci } from "@/lib/config"
+import { isAdmin, getConfig, getPermessi, getAnnoAttivoName, listBilanci, getListeValoriRighe, RigaListaValori } from "@/lib/config"
 import { getRecentLogs } from "@/lib/logger"
 import PermessiManager from "@/components/PermessiManager"
+import ListaValoriManager from "@/components/ListaValoriManager"
 import AnnoAttivoSelector from "@/components/AnnoAttivoSelector"
 import AppHeader from "@/components/AppHeader"
 import Link from "next/link"
@@ -25,11 +26,12 @@ export default async function AdminPage() {
   if (!admin) redirect("/dashboard")
 
   const config = await getConfig()
-  const [permessi, bilanci, annoAttivoName, recentLogs] = await Promise.all([
+  const [permessi, bilanci, annoAttivoName, recentLogs, listeAdmin] = await Promise.all([
     getPermessi(),
     listBilanci(),
     getAnnoAttivoName(config.annoAttivo ?? ""),
     getRecentLogs(10),
+    getListeValoriRighe().catch(() => ({ righe: [] as RigaListaValori[], palette: { testo: [], sfondo: [] } })),
   ])
 
   return (
@@ -60,6 +62,25 @@ export default async function AdminPage() {
           </div>
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 ml-6">Gestisci quali branche ogni utente può modificare.</p>
           <PermessiManager permessi={permessi} />
+        </div>
+
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-6 border border-slate-200 dark:border-slate-700">
+          <div className="flex items-center gap-2 mb-1">
+            <svg width="18" height="16" viewBox="0 0 24 20" aria-hidden="true" className="flex-shrink-0">
+              <defs>
+                <linearGradient id="lista-valori-grad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stopColor="#62b4f2" />
+                  <stop offset="1" stopColor="#3f7cc4" />
+                </linearGradient>
+              </defs>
+              <rect x="0" y="0" width="24" height="5" rx="2" fill="url(#lista-valori-grad)" />
+              <rect x="0" y="7.5" width="24" height="5" rx="2" fill="url(#lista-valori-grad)" />
+              <rect x="0" y="15" width="24" height="5" rx="2" fill="url(#lista-valori-grad)" />
+            </svg>
+            <h2 className="font-semibold text-slate-800 dark:text-slate-100">Lista Valori</h2>
+          </div>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 ml-6">Valori e colori di Modalità, Fondo e In/Out, letti dal foglio Lista Valori.</p>
+          <ListaValoriManager righe={listeAdmin.righe} palette={listeAdmin.palette} />
         </div>
 
         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-6 border border-slate-200 dark:border-slate-700 opacity-60">

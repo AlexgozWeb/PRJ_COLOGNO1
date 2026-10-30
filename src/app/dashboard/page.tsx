@@ -6,6 +6,7 @@ import { authOptions } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { getConfig, isAdmin, getUserPermessi, getAnnoAttivoName, listBilanci } from "@/lib/config"
 import { BRANCHE, BRANCA_LABELS, Branca } from "@/types"
+import { getBrancheDisponibili } from "@/lib/sheets"
 import Link from "next/link"
 import SignOutButton from "@/components/SignOutButton"
 import AnnoSelector from "@/components/AnnoSelector"
@@ -85,6 +86,9 @@ export default async function DashboardPage(props: PageProps<'/dashboard'>) {
   const isAnnoAttivo = selectedFileId === config.annoAttivo
 
   const selectedName = await getAnnoAttivoName(selectedFileId)
+  const brancheDisponibili = selectedFileId
+    ? await getBrancheDisponibili(selectedFileId, BRANCHE)
+    : new Set<Branca>(BRANCHE)
 
   return (
     <div className="min-h-screen bg-slate-100 dark:bg-slate-900">
@@ -135,6 +139,22 @@ export default async function DashboardPage(props: PageProps<'/dashboard'>) {
           {BRANCHE.map((branca) => {
             const canEdit = isAnnoAttivo && (admin || permessi[branca])
             const fileParam = isAnnoAttivo ? "" : `?fileId=${selectedFileId}`
+            if (!brancheDisponibili.has(branca)) {
+              return (
+                <div
+                  key={branca}
+                  title="Branca non presente nell'anno"
+                  aria-disabled="true"
+                  className={`bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-6 border-l-4 ${BRANCA_COLORS[branca]} block opacity-40 cursor-not-allowed select-none`}
+                >
+                  <div className="flex items-center gap-3 mb-3">
+                    <span className="text-2xl">{BRANCA_ICONS[branca]}</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-100 text-base">{BRANCA_LABELS[branca]}</span>
+                  </div>
+                  <div className="text-sm font-medium text-slate-400 dark:text-slate-500">Non presente</div>
+                </div>
+              )
+            }
             return (
               <Link
                 key={branca}
