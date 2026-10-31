@@ -3,6 +3,69 @@
 import { useState, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Movimento, Branca, ListeValori, ValoreLista } from "@/types"
+import { compressImage, rotateImage, isImage } from "@/lib/imageTools"
+
+interface PendingItem {
+  file: File
+  originalSize: number
+}
+
+function formatSize(bytes: number): string {
+  return bytes >= 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`
+}
+
+function PendingFileRow({ item, busy, onRotate, onRemove }: {
+  item: PendingItem
+  busy: boolean
+  onRotate: (dir: 90 | -90) => void
+  onRemove: () => void
+}) {
+  const { file, originalSize } = item
+  const image = isImage(file)
+  const [url, setUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!image) return
+    let cancelled = false
+    const reader = new FileReader()
+    reader.onload = () => { if (!cancelled) setUrl(reader.result as string) }
+    reader.readAsDataURL(file)
+    return () => { cancelled = true }
+  }, [file, image])
+
+  const btn = "w-6 h-6 flex items-center justify-center rounded bg-white/70 dark:bg-slate-700 text-slate-600 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-600 disabled:opacity-40"
+
+  return (
+    <li className="flex items-center gap-2 text-xs bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg p-1.5">
+      {image && url ? (
+        <button
+          type="button"
+          onClick={() => window.open(URL.createObjectURL(file), "_blank")}
+          title="Apri a grandezza intera"
+          className="flex-shrink-0"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={url} alt={file.name} className="w-14 h-14 object-cover rounded border border-emerald-200 dark:border-emerald-800" />
+        </button>
+      ) : (
+        <span className="w-14 h-14 flex-shrink-0 flex items-center justify-center text-2xl">📄</span>
+      )}
+      <span className="flex-1 min-w-0 text-emerald-700 dark:text-emerald-300">
+        <span className="block truncate">{file.name}</span>
+        <span className="text-emerald-500">
+          {file.size < originalSize ? `${formatSize(originalSize)} → ${formatSize(file.size)}` : formatSize(file.size)}
+        </span>
+      </span>
+      {image && (
+        <span className="flex gap-1 flex-shrink-0">
+          <button type="button" disabled={busy} onClick={() => onRotate(-90)} className={btn} title="Ruota a sinistra">↺</button>
+          <button type="button" disabled={busy} onClick={() => onRotate(90)} className={btn} title="Ruota a destra">↻</button>
+        </span>
+      )}
+      <button type="button" onClick={onRemove} className="flex-shrink-0 px-1 text-slate-400 hover:text-red-600 transition-colors" title="Rimuovi">×</button>
+    </li>
+  )
+}
 
 function todayISO(): string {
   return new Date().toISOString().split("T")[0]
@@ -133,7 +196,8 @@ export default function MovimentiTable({ movimenti, branca, canEdit, maxAttachme
   const [error, setError] = useState<string | null>(null)
 
   // Allegati state
-  const [pendingFiles, setPendingFiles] = useState<File[]>([])
+  const [pendingFiles, setPendingFiles] = useState<PendingItem[]>([])
+  const [processingFiles, setProcessingFiles] = useState(false)
   const [existingAllegati, setExistingAllegati] = useState<ExistingAllegato[]>([])
   const [pendingDeletes, setPendingDeletes] = useState<string[]>([])
   const [createdIdNota, setCreatedIdNota] = useState<string | null>(null)
@@ -210,27 +274,52 @@ export default function MovimentiTable({ movimenti, branca, canEdit, maxAttachme
     }
   }, [modal, selected?.idNota, branca])
 
-  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     setFileError(null)
     const files = Array.from(e.target.files || [])
-    const valid: File[] = []
-    for (const f of files) {
-      if (!ALLOWED_TYPES.includes(f.type)) {
-        setFileError(`"${f.name}": tipo non ammesso (solo JPG, PNG, PDF)`)
+    if (fileInputRef.current) fileInputRef.current.value = ""
+    setProcessingFiles(true)
+    const valid: PendingItem[] = []
+    for (const original of files) {
+      if (!ALLOWED_TYPES.includes(original.type)) {
+        setFileError(`"${original.name}": tipo non ammesso (solo JPG, PNG, PDF)`)
         continue
+      }
+      let f = original
+      try {
+        f = await compressImage(original)
+      } catch {
+        f = original
       }
       if (f.size > maxAttachmentSizeMb * 1024 * 1024) {
-        setFileError(`"${f.name}": troppo grande (max ${maxAttachmentSizeMb} MB)`)
+        setFileError(`"${original.name}": troppo grande anche dopo la compressione (max ${maxAttachmentSizeMb} MB)`)
         continue
       }
-      valid.push(f)
+      valid.push({ file: f, originalSize: original.size })
     }
     setPendingFiles(prev => [...prev, ...valid])
-    if (fileInputRef.current) fileInputRef.current.value = ""
+    setProcessingFiles(false)
   }
 
-  function removePending(idx: number) {
-    setPendingFiles(prev => prev.filter((_, i) => i !== idx))
+  function removePending(item: PendingItem) {
+    setPendingFiles(prev => prev.filter(p => p !== item))
+  }
+
+  async function rotatePending(item: PendingItem, dir: 90 | -90) {
+    setFileError(null)
+    setProcessingFiles(true)
+    try {
+      const rotated = await rotateImage(item.file, dir)
+      if (rotated.size > maxAttachmentSizeMb * 1024 * 1024) {
+        setFileError(`"${item.file.name}": dopo la rotazione supera il limite (max ${maxAttachmentSizeMb} MB)`)
+      } else {
+        setPendingFiles(prev => prev.map(p => (p === item ? { ...p, file: rotated } : p)))
+      }
+    } catch {
+      setFileError(`"${item.file.name}": rotazione non riuscita`)
+    } finally {
+      setProcessingFiles(false)
+    }
   }
 
   // L'eliminazione effettiva avviene solo al salvataggio
@@ -252,7 +341,8 @@ export default function MovimentiTable({ movimenti, branca, canEdit, maxAttachme
   }
 
   async function uploadPendingFiles(idNota: string) {
-    for (const file of pendingFiles) {
+    for (const item of pendingFiles) {
+      const file = item.file
       const fd = new FormData()
       fd.append("file", file)
       const res = await fetch(`/api/allegati/${branca}/${idNota}`, { method: "POST", body: fd })
@@ -260,7 +350,7 @@ export default function MovimentiTable({ movimenti, branca, canEdit, maxAttachme
         const data = await res.json().catch(() => ({}))
         throw new Error(data.error || `Errore upload "${file.name}" (HTTP ${res.status})`)
       }
-      setPendingFiles(prev => prev.filter(f => f !== file))
+      setPendingFiles(prev => prev.filter(p => p !== item))
     }
   }
 
@@ -655,29 +745,21 @@ export default function MovimentiTable({ movimenti, branca, canEdit, maxAttachme
                 {/* File in attesa di upload */}
                 {pendingFiles.length > 0 && (
                   <ul className="space-y-1">
-                    {pendingFiles.map((f, i) => (
-                      <li key={i} className="flex items-center justify-between gap-2 text-xs bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg px-2 py-1.5">
-                        <span className="truncate text-emerald-700 dark:text-emerald-300">
-                          {f.type === "application/pdf" ? "📄" : "🖼️"} {f.name}
-                          <span className="ml-1 text-emerald-500 dark:text-emerald-500">
-                            ({(f.size / 1024).toFixed(0)} KB)
-                          </span>
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => removePending(i)}
-                          className="flex-shrink-0 text-slate-400 hover:text-red-600 transition-colors"
-                          title="Rimuovi"
-                        >
-                          ×
-                        </button>
-                      </li>
+                    {pendingFiles.map(item => (
+                      <PendingFileRow
+                        key={item.file.name + item.originalSize}
+                        item={item}
+                        busy={processingFiles}
+                        onRotate={dir => rotatePending(item, dir)}
+                        onRemove={() => removePending(item)}
+                      />
                     ))}
                   </ul>
                 )}
+                {processingFiles && <p className="text-xs text-slate-400 italic">Elaborazione immagini…</p>}
 
                 <p className="text-xs text-slate-400 dark:text-slate-500">
-                  JPG, PNG o PDF · max {maxAttachmentSizeMb} MB per file
+                  JPG, PNG o PDF · max {maxAttachmentSizeMb} MB per file · le foto vengono ridotte automaticamente
                 </p>
               </div>
 
@@ -710,7 +792,7 @@ export default function MovimentiTable({ movimenti, branca, canEdit, maxAttachme
               </button>
               <button
                 onClick={handleSave}
-                disabled={saving || !form.data || !findValore(liste.inOut, form.inOut)}
+                disabled={saving || processingFiles || !form.data || !findValore(liste.inOut, form.inOut)}
                 className="px-4 py-2 text-sm font-medium bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
               >
                 {saving ? "Salvataggio…" : "Salva"}
