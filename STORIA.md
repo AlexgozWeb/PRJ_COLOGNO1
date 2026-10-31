@@ -54,6 +54,11 @@ Branca `dev` → progetto Vercel `prj-cologno-1-dev`; branca `master` → `prj-c
 ## 8. Dashboard: branche assenti (30/10/2026, commit `149e6a6`)
 - Nelle annate passate, il blocco di una branca senza foglio è disattivato: semitrasparente, non cliccabile, con il commento "Branca non presente nell'anno".
 
+## 9. Allegati immagine: compressione, anteprima, rotazione (31/10/2026, commit `2d4e54a`)
+- JPG/PNG ridotti nel browser prima dell'upload: lato lungo massimo 2000 px, JPEG qualità 0,8; se il file compresso non è più leggero resta l'originale. I PDF non vengono toccati.
+- Anteprima con miniatura (clic per aprire a grandezza intera), dimensioni "prima → dopo", rotazione ↺/↻ e rimozione.
+- L'upload avviene solo al "Salva"; il limite di `max_attachment_size_mb` si applica al file compresso.
+
 ## Da fare / note aperte
 - Controllo dell'ID nota anche in modifica (PUT).
 - Backfill della colonna K per le note già con allegati.
