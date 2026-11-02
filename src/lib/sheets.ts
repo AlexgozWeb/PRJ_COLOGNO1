@@ -46,7 +46,7 @@ function rowToMovimento(row: string[], sheetRowIndex: number): Movimento {
 }
 
 function userName(email: string): string {
-  return email.split("@")[0]
+  return email
 }
 
 function todayIt(): string {
