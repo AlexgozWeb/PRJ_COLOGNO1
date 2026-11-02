@@ -151,7 +151,7 @@ function movimentoToForm(m: Movimento): FormData {
   }
 }
 
-const inputCls = "w-full border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-400 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100"
+const inputCls = "w-full min-w-0 max-w-full border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-400 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100"
 const labelCls = "block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1"
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "application/pdf"]
@@ -592,8 +592,8 @@ export default function MovimentiTable({ movimenti, branca, canEdit, maxAttachme
 
       {/* Modal Add/Edit */}
       {(modal === "add" || modal === "edit") && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-lg border border-slate-200 dark:border-slate-700 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-lg border border-slate-200 dark:border-slate-700 max-h-[90vh] overflow-y-auto overflow-x-hidden [&_.grid>div]:min-w-0">
             <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between bg-slate-50 dark:bg-slate-700 rounded-t-2xl sticky top-0 z-10">
               <h2 className="font-semibold text-slate-800 dark:text-slate-100">
                 {modal === "add" ? "➕ Aggiungi movimento" : "✏️ Modifica movimento"}
@@ -601,8 +601,8 @@ export default function MovimentiTable({ movimenti, branca, canEdit, maxAttachme
               <button onClick={closeModal} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl leading-none w-7 h-7 flex items-center justify-center rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">×</button>
             </div>
 
-            <div className="px-6 py-5 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+            <div className="px-4 sm:px-6 py-5 space-y-4">
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
                 <div>
                   <label className={labelCls}>Data</label>
                   <input

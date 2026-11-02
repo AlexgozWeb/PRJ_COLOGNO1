@@ -7,15 +7,15 @@ import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister"
 const geist = Geist({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Scout Bilancio — Cologno 1",
-  description: "Gestione bilancio gruppo scout Cologno 1",
-  applicationName: "Bilancio Cologno 1",
+  title: "NSC1 — Note Spese Cologno 1",
+  description: "Note Spese del Gruppo Scout Cologno 1",
+  applicationName: "NSC1",
   icons: { apple: "/apple-touch-icon.png" },
-  appleWebApp: { capable: true, title: "Bilancio Cologno 1" },
+  appleWebApp: { capable: true, title: "NSC1" },
 }
 
 export const viewport: Viewport = {
-  themeColor: "#ffffff",
+  themeColor: "#1e293b",
 }
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

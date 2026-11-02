@@ -19,19 +19,19 @@ interface Props {
 export default function AppHeader({ backHref, backLabel = "Dashboard", children, rightContent }: Props) {
   return (
     <header className="bg-slate-800 shadow-lg">
-      <div className="max-w-6xl mx-auto px-4 sm:px-8 py-3 sm:py-4 flex items-center gap-4">
+      <div className="max-w-6xl mx-auto px-3 sm:px-8 py-2 sm:py-4 flex flex-wrap items-center gap-x-3 gap-y-2 sm:gap-4">
 
         {/* Gruppo logo — sempre presente, cliccabile → dashboard */}
-        <Link href="/dashboard" className="flex items-center gap-3 flex-shrink-0 group">
+        <Link href="/dashboard" className="flex items-center gap-2 sm:gap-3 flex-shrink-0 group">
           <img
             src="/logo-gruppo.png"
             alt="Gruppo Scout Cologno 1"
-            className="w-16 h-16 object-contain transition-opacity group-hover:opacity-80"
+            className="w-11 h-11 sm:w-16 sm:h-16 object-contain transition-opacity group-hover:opacity-80"
             style={{ mixBlendMode: "screen" }}
           />
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-lg font-bold text-white leading-tight">Nota Spese</span>
+              <span className="text-base sm:text-lg font-bold text-white leading-tight">Nota Spese</span>
               {process.env.ENVIRONMENT_CODE && (
                 <span
                   className="text-xs font-bold px-2 py-0.5 rounded-full"
@@ -61,7 +61,7 @@ export default function AppHeader({ backHref, backLabel = "Dashboard", children,
         {!children && <div className="flex-1" />}
 
         {/* Destra */}
-        <div className="flex items-center gap-3 flex-shrink-0">
+        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0 ml-auto">
           {backHref && (
             <Link
               href={backHref}

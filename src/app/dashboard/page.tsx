@@ -135,7 +135,7 @@ export default async function DashboardPage(props: PageProps<'/dashboard'>) {
           </Suspense>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-5">
           {BRANCHE.map((branca) => {
             const canEdit = isAnnoAttivo && (admin || permessi[branca])
             const fileParam = isAnnoAttivo ? "" : `?fileId=${selectedFileId}`
@@ -145,7 +145,7 @@ export default async function DashboardPage(props: PageProps<'/dashboard'>) {
                   key={branca}
                   title="Branca non presente nell'anno"
                   aria-disabled="true"
-                  className={`bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-6 border-l-4 ${BRANCA_COLORS[branca]} block opacity-40 cursor-not-allowed select-none`}
+                  className={`bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-4 sm:p-6 border-l-4 ${BRANCA_COLORS[branca]} block opacity-40 cursor-not-allowed select-none`}
                 >
                   <div className="flex items-center gap-3 mb-3">
                     <span className="text-2xl">{BRANCA_ICONS[branca]}</span>
@@ -159,7 +159,7 @@ export default async function DashboardPage(props: PageProps<'/dashboard'>) {
               <Link
                 key={branca}
                 href={`/branca/${branca}${fileParam}`}
-                className={`bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-6 hover:shadow-lg transition-all border-l-4 ${BRANCA_COLORS[branca]} block group`}
+                className={`bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-4 sm:p-6 hover:shadow-lg transition-all border-l-4 ${BRANCA_COLORS[branca]} block group`}
               >
                 <div className="flex items-center gap-3 mb-3">
                   <span className="text-2xl">{BRANCA_ICONS[branca]}</span>
