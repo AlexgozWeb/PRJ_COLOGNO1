@@ -76,7 +76,7 @@ export async function POST(
     const config = await getConfig()
     if (!config.annoAttivo) return errResponse("Anno attivo non configurato")
 
-    const { idNota } = await addMovimento(config.annoAttivo, branca as Branca, body)
+    const { idNota } = await addMovimento(config.annoAttivo, branca as Branca, body, auth.email)
     return Response.json({ success: true, idNota })
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Errore interno"
@@ -104,7 +104,7 @@ export async function PUT(
     const config = await getConfig()
     if (!config.annoAttivo) return errResponse("Anno attivo non configurato")
 
-    await updateMovimento(config.annoAttivo, branca as Branca, rowNumber, data)
+    await updateMovimento(config.annoAttivo, branca as Branca, rowNumber, data, auth.email)
     return Response.json({ success: true })
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Errore interno"

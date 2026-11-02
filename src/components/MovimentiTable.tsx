@@ -151,6 +151,25 @@ function movimentoToForm(m: Movimento): FormData {
   }
 }
 
+function AuditInfo({ m, className = "" }: { m: Movimento; className?: string }) {
+  const rows: [string, string][] = [
+    ["Creato da", m.creatoDa],
+    ["Creato il", m.creatoIl],
+    ["Modificato da", m.modificatoDa],
+    ["Modificato il", m.modificatoIl],
+  ]
+  return (
+    <dl className={`grid grid-cols-2 gap-x-4 gap-y-2 text-xs ${className}`}>
+      {rows.map(([label, val]) => (
+        <div key={label} className="min-w-0">
+          <dt className="text-slate-400 dark:text-slate-500">{label}</dt>
+          <dd className="text-slate-700 dark:text-slate-200 truncate">{val || "-"}</dd>
+        </div>
+      ))}
+    </dl>
+  )
+}
+
 const inputCls = "w-full min-w-0 max-w-full border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-400 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100"
 const labelCls = "block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1"
 
@@ -467,7 +486,7 @@ export default function MovimentiTable({ movimenti, branca, canEdit, maxAttachme
                   <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide">Codice</th>
                   <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide">Note</th>
                   <th className="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wide">Status</th>
-                  {canEdit && <th className="px-3 py-3 w-20"></th>}
+                  <th className={`px-3 py-3 ${canEdit ? "w-20" : "w-14"}`}></th>
                 </tr>
               </thead>
               <tbody>
@@ -529,39 +548,41 @@ export default function MovimentiTable({ movimenti, branca, canEdit, maxAttachme
                         )
                       })()}
                     </td>
-                    {canEdit && (
-                      <td className="px-3 py-3 text-right whitespace-nowrap">
-                        <button
-                          onClick={() => openView(m)}
-                          className="inline-flex items-center gap-1 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors mr-2"
-                          title={m.allegati ? "Presenza Allegati" : "Assenza Allegati"}
-                          aria-label="Visualizza nota spesa"
-                        >
-                          <span className={`inline-block w-2 h-2 rounded-full ${m.allegati ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-500"}`} />
-                          <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                            <polyline points="14 2 14 8 20 8"/>
-                            <line x1="16" y1="13" x2="8" y2="13"/>
-                            <line x1="16" y1="17" x2="8" y2="17"/>
-                            <polyline points="10 9 9 9 8 9"/>
-                          </svg>
-                        </button>
-                        <button
-                          onClick={() => openEdit(m)}
-                          className="text-slate-400 hover:text-emerald-600 transition-colors mr-1"
-                          title="Modifica"
-                        >
-                          ✏️
-                        </button>
-                        <button
-                          onClick={() => openDelete(m)}
-                          className="text-slate-400 hover:text-red-600 transition-colors"
-                          title="Elimina"
-                        >
-                          🗑️
-                        </button>
-                      </td>
-                    )}
+                    <td className="px-3 py-3 text-right whitespace-nowrap">
+                      <button
+                        onClick={() => openView(m)}
+                        className="inline-flex items-center gap-1 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors mr-2"
+                        title={m.allegati ? "Presenza Allegati" : "Assenza Allegati"}
+                        aria-label="Visualizza nota spesa"
+                      >
+                        <span className={`inline-block w-2 h-2 rounded-full ${m.allegati ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-500"}`} />
+                        <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                          <polyline points="14 2 14 8 20 8"/>
+                          <line x1="16" y1="13" x2="8" y2="13"/>
+                          <line x1="16" y1="17" x2="8" y2="17"/>
+                          <polyline points="10 9 9 9 8 9"/>
+                        </svg>
+                      </button>
+                      {canEdit && (
+                        <>
+                          <button
+                            onClick={() => openEdit(m)}
+                            className="text-slate-400 hover:text-emerald-600 transition-colors mr-1"
+                            title="Modifica"
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            onClick={() => openDelete(m)}
+                            className="text-slate-400 hover:text-red-600 transition-colors"
+                            title="Elimina"
+                          >
+                            🗑️
+                          </button>
+                        </>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -763,6 +784,12 @@ export default function MovimentiTable({ movimenti, branca, canEdit, maxAttachme
                 </p>
               </div>
 
+              {modal === "edit" && selected && (
+                <div className="border border-slate-200 dark:border-slate-600 rounded-xl p-3 bg-slate-50 dark:bg-slate-700/40">
+                  <AuditInfo m={selected} />
+                </div>
+              )}
+
               <div className="flex items-center gap-2 text-sm bg-slate-50 dark:bg-slate-700 rounded-lg px-3 py-2">
                 <span className="text-slate-500 dark:text-slate-400">Status:</span>
                 {(() => {
@@ -896,6 +923,7 @@ export default function MovimentiTable({ movimenti, branca, canEdit, maxAttachme
                   ))}
                 </ul>
               )}
+              <AuditInfo m={selected} className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-700" />
             </div>
 
             {/* Footer */}

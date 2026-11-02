@@ -47,6 +47,10 @@ export interface Movimento {
   status: string
   idNota: string   // colonna J: codice univoco allegati (es. BLC001)
   allegati: boolean // colonna K: TRUE se la nota ha almeno un allegato
+  modificatoDa: string // colonna L
+  modificatoIl: string // colonna M (DD/MM/YYYY)
+  creatoDa: string     // colonna N
+  creatoIl: string     // colonna O (DD/MM/YYYY)
 }
 
 export interface Permessi {

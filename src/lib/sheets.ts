@@ -38,7 +38,22 @@ function rowToMovimento(row: string[], sheetRowIndex: number): Movimento {
     status: row[8] || "",
     idNota: row[9] || "",
     allegati: (row[10] || "").trim().toUpperCase() === "TRUE",
+    modificatoDa: row[11] || "",
+    modificatoIl: row[12] || "",
+    creatoDa: row[13] || "",
+    creatoIl: row[14] || "",
   }
+}
+
+function userName(email: string): string {
+  return email.split("@")[0]
+}
+
+function todayIt(): string {
+  return new Date().toLocaleString("it-IT", {
+    timeZone: "Europe/Rome", day: "2-digit", month: "2-digit", year: "numeric",
+    hour: "2-digit", minute: "2-digit", hour12: false,
+  }).replace(",", "")
 }
 
 function generateIdNota(branca: Branca, existing: Movimento[]): string {
@@ -69,7 +84,7 @@ export async function getMovimenti(spreadsheetId: string, branca: Branca): Promi
   const sheets = getSheetsClient()
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId,
-    range: `${branca}!A1:K`,
+    range: `${branca}!A1:O`,
   })
   const rows = (response.data.values || []) as string[][]
   return rows
@@ -81,7 +96,8 @@ export async function getMovimenti(spreadsheetId: string, branca: Branca): Promi
 export async function addMovimento(
   spreadsheetId: string,
   branca: Branca,
-  data: Pick<Movimento, "data" | "inOut" | "modalita" | "fondo" | "importo" | "codice" | "note">
+  data: Pick<Movimento, "data" | "inOut" | "modalita" | "fondo" | "importo" | "codice" | "note">,
+  userEmail: string
 ): Promise<{ idNota: string }> {
   const sheets = getSheetsClient()
   const existing = await getMovimenti(spreadsheetId, branca)
@@ -114,6 +130,10 @@ export async function addMovimento(
           range: `${branca}!J${targetRow}`,
           values: [[idNota]],
         },
+        {
+          range: `${branca}!L${targetRow}:O${targetRow}`,
+          values: [["-", "-", userName(userEmail), todayIt()]],
+        },
       ],
     },
   })
@@ -144,24 +164,33 @@ export async function updateMovimento(
   spreadsheetId: string,
   branca: Branca,
   rowNumber: number,
-  data: Partial<Pick<Movimento, "data" | "inOut" | "modalita" | "fondo" | "importo" | "codice" | "note">>
+  data: Partial<Pick<Movimento, "data" | "inOut" | "modalita" | "fondo" | "importo" | "codice" | "note">>,
+  userEmail: string
 ): Promise<void> {
   const sheets = getSheetsClient()
-  // Aggiorna solo B:H (dati), lascia intatta I (Status = formula) e J (ID_NOTA, immutabile)
-  await sheets.spreadsheets.values.update({
+  // Aggiorna B:H (dati) e L:M (Modificato da/il); lascia intatte I (formula), J (ID_NOTA), K, N, O
+  await sheets.spreadsheets.values.batchUpdate({
     spreadsheetId,
-    range: `${branca}!B${rowNumber}:H${rowNumber}`,
-    valueInputOption: "USER_ENTERED",
     requestBody: {
-      values: [[
-        data.data ?? "",
-        data.inOut ?? "",
-        data.modalita ?? "",
-        data.fondo ?? "",
-        data.importo ?? 0,
-        data.codice ?? "",
-        data.note ?? "",
-      ]],
+      valueInputOption: "USER_ENTERED",
+      data: [
+        {
+          range: `${branca}!B${rowNumber}:H${rowNumber}`,
+          values: [[
+            data.data ?? "",
+            data.inOut ?? "",
+            data.modalita ?? "",
+            data.fondo ?? "",
+            data.importo ?? 0,
+            data.codice ?? "",
+            data.note ?? "",
+          ]],
+        },
+        {
+          range: `${branca}!L${rowNumber}:M${rowNumber}`,
+          values: [[userName(userEmail), todayIt()]],
+        },
+      ],
     },
   })
 }
@@ -188,18 +217,18 @@ export async function deleteMovimento(
   const lastDataRow = movimenti.length > 0 ? movimenti[movimenti.length - 1].id : rowNumber
   const last = Math.max(lastDataRow, rowNumber)
 
-  // Valori grezzi di B:K dalla riga successiva a quella eliminata fino all'ultima nota
+  // Valori grezzi di B:O dalla riga successiva a quella eliminata fino all'ultima nota
   let below: unknown[][] = []
   if (last > rowNumber) {
     const res = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: `${branca}!B${rowNumber + 1}:K${last}`,
+      range: `${branca}!B${rowNumber + 1}:O${last}`,
       valueRenderOption: "UNFORMATTED_VALUE",
     })
     below = (res.data.values || []) as unknown[][]
   }
 
-  // Colonne B:K → B:H (dati) e J:K (ID_NOTA, Allegati); I (Status, formula) non viene toccata
+  // Colonne B:O → B:H (dati) e J:O (ID_NOTA, Allegati, audit); I (Status, formula) non viene toccata
   const cell = (row: unknown[] | undefined, i: number) => row?.[i] ?? ""
   const count = last - rowNumber + 1
   const dataBlock: unknown[][] = []
@@ -207,7 +236,7 @@ export async function deleteMovimento(
   for (let i = 0; i < count; i++) {
     const src = below[i] // undefined per l'ultima riga: viene svuotata
     dataBlock.push([0, 1, 2, 3, 4, 5, 6].map(c => cell(src, c)))
-    idBlock.push([8, 9].map(c => cell(src, c)))
+    idBlock.push([8, 9, 10, 11, 12, 13].map(c => cell(src, c)))
   }
 
   await sheets.spreadsheets.values.batchUpdate({
@@ -216,7 +245,7 @@ export async function deleteMovimento(
       valueInputOption: "USER_ENTERED",
       data: [
         { range: `${branca}!B${rowNumber}:H${last}`, values: dataBlock },
-        { range: `${branca}!J${rowNumber}:K${last}`, values: idBlock },
+        { range: `${branca}!J${rowNumber}:O${last}`, values: idBlock },
       ],
     },
   })
