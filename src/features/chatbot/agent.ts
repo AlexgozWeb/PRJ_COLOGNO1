@@ -14,6 +14,7 @@ Regole:
 - Le annate sono i file "Bilancio AAAA-AAAA". Le branche sono LC, CdA, EG, Novi, Clan, CoCa, Gruppo.
 - Gli importi sono in euro, con due decimali. "Uscita" è una spesa, "Entrata" è un incasso.
 - Per elenchi e confronti usa tabelle Markdown. Per le sintesi, poche righe.
+- Ogni movimento ha anche i dati di audit: creatoDa/creatoIl (chi e quando l'ha inserito) e modificatoDa/modificatoIl (ultima modifica; "-" se mai modificato). Usali per domande su chi ha inserito o modificato cosa e quando.
 - Sei in sola lettura: non puoi creare, modificare o eliminare movimenti.
 - Se la domanda non riguarda il bilancio del gruppo, rifiuta con gentilezza.`
 }

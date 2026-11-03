@@ -58,8 +58,9 @@ export const chatbotTools = {
       branca: z.enum(BRANCHE).optional().describe("Se omessa, tutte le branche"),
       inOut: z.enum(["Entrata", "Uscita"]).optional(),
       testo: z.string().optional().describe("Filtra per testo contenuto in note o codice"),
+      utente: z.string().optional().describe("Filtra per email (o parte) di chi ha creato o modificato il movimento"),
     }),
-    execute: async ({ annata, branca, inOut, testo }) => {
+    execute: async ({ annata, branca, inOut, testo, utente }) => {
       const [a] = await resolveAnnate([annata])
       if (!a) return { errore: `Annata non trovata: ${annata}` }
       let righe = await leggi(a, branca ? [branca] : BRANCHE)
@@ -68,6 +69,10 @@ export const chatbotTools = {
         const t = testo.toLowerCase()
         righe = righe.filter(m => `${m.note} ${m.codice}`.toLowerCase().includes(t))
       }
+      if (utente) {
+        const u = utente.toLowerCase()
+        righe = righe.filter(m => `${m.creatoDa} ${m.modificatoDa}`.toLowerCase().includes(u))
+      }
       return {
         annata: a.name,
         totaleRighe: righe.length,
@@ -75,6 +80,7 @@ export const chatbotTools = {
         righe: righe.slice(0, MAX_RIGHE).map(m => ({
           branca: m.branca, idNota: m.idNota, data: m.data, inOut: m.inOut, modalita: m.modalita,
           fondo: m.fondo, importo: m.importo, codice: m.codice, note: m.note,
+          creatoDa: m.creatoDa, creatoIl: m.creatoIl, modificatoDa: m.modificatoDa, modificatoIl: m.modificatoIl,
         })),
       }
     },
