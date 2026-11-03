@@ -3,12 +3,14 @@
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { Permessi, Branca, BRANCHE, BRANCA_LABELS } from "@/types"
+import ChatbotUserCheckbox from "@/features/chatbot/UserCheckbox"
 
 interface Props {
   permessi: Permessi
+  chatbotUsers?: string[] // se assente, la colonna Assistente AI non viene mostrata
 }
 
-export default function PermessiManager({ permessi: initialPermessi }: Props) {
+export default function PermessiManager({ permessi: initialPermessi, chatbotUsers }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
@@ -111,6 +113,9 @@ export default function PermessiManager({ permessi: initialPermessi }: Props) {
                   </th>
                 ))}
                 <th className="px-3 py-2 text-center text-xs font-semibold text-slate-500 dark:text-slate-300 uppercase">Tutte</th>
+                {chatbotUsers && (
+                  <th className="px-3 py-2 text-center text-xs font-semibold text-slate-500 dark:text-slate-300 uppercase">🤖 AI</th>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
@@ -147,6 +152,11 @@ export default function PermessiManager({ permessi: initialPermessi }: Props) {
                         title="Tutte le branche"
                       />
                     </td>
+                    {chatbotUsers && (
+                      <td className="px-3 py-2 text-center">
+                        <ChatbotUserCheckbox email={email} initial={chatbotUsers.includes(email.trim().toLowerCase())} />
+                      </td>
+                    )}
                   </tr>
                 )
               })}

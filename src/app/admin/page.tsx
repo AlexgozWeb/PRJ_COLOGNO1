@@ -10,6 +10,8 @@ import ListaValoriManager from "@/components/ListaValoriManager"
 import AnnoAttivoSelector from "@/components/AnnoAttivoSelector"
 import AppHeader from "@/components/AppHeader"
 import Link from "next/link"
+import { getChatbotEnabled, getChatbotModel, getChatbotUsers, listChatbotModels } from "@/features/chatbot/settings"
+import ChatbotAdminToggle from "@/features/chatbot/AdminToggle"
 
 const TIPO_COLORS: Record<string, string> = {
   Drive:  "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300",
@@ -26,6 +28,12 @@ export default async function AdminPage() {
   if (!admin) redirect("/dashboard")
 
   const config = await getConfig()
+  const [chatbotEnabled, chatbotModel, chatbotModels, chatbotUsers] = await Promise.all([
+    getChatbotEnabled().catch(() => false),
+    getChatbotModel(),
+    listChatbotModels().catch(() => [] as string[]),
+    getChatbotUsers().catch(() => [] as string[]),
+  ])
   const [permessi, bilanci, annoAttivoName, recentLogs, listeAdmin] = await Promise.all([
     getPermessi(),
     listBilanci(),
@@ -61,7 +69,7 @@ export default async function AdminPage() {
             <h2 className="font-semibold text-slate-800 dark:text-slate-100">Permessi utenti</h2>
           </div>
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 ml-6">Gestisci quali branche ogni utente può modificare.</p>
-          <PermessiManager permessi={permessi} />
+          <PermessiManager permessi={permessi} chatbotUsers={chatbotUsers} />
         </div>
 
         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-6 border border-slate-200 dark:border-slate-700">
@@ -82,6 +90,8 @@ export default async function AdminPage() {
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 ml-6">Valori e colori di Modalità, Fondo e In/Out, letti dal foglio Lista Valori.</p>
           <ListaValoriManager righe={listeAdmin.righe} palette={listeAdmin.palette} />
         </div>
+
+        <ChatbotAdminToggle initial={chatbotEnabled} model={chatbotModel} models={chatbotModels} />
 
         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-6 border border-slate-200 dark:border-slate-700 opacity-60">
           <div className="flex items-center gap-2 mb-1">

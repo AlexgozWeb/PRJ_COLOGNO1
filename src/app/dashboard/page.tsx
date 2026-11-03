@@ -12,6 +12,7 @@ import SignOutButton from "@/components/SignOutButton"
 import AnnoSelector from "@/components/AnnoSelector"
 import AppHeader from "@/components/AppHeader"
 import { Suspense } from "react"
+import { canUseChatbot } from "@/features/chatbot/settings"
 
 function YForkIcon() {
   return (
@@ -75,11 +76,12 @@ export default async function DashboardPage(props: PageProps<'/dashboard'>) {
   if (!session?.user?.email) redirect("/login")
 
   const email = session.user.email!
-  const [config, admin, permessi, bilanci] = await Promise.all([
+  const [config, admin, permessi, bilanci, chatbot] = await Promise.all([
     getConfig(),
     isAdmin(email),
     getUserPermessi(email),
     listBilanci(),
+    canUseChatbot(email),
   ])
 
   const selectedFileId = (searchParams?.fileId as string) || config.annoAttivo
@@ -95,6 +97,11 @@ export default async function DashboardPage(props: PageProps<'/dashboard'>) {
       <AppHeader
         rightContent={
           <>
+            {chatbot && (
+              <Link href="/chatbot" className="text-sm text-sky-400 hover:text-sky-300 font-medium transition-colors">
+                🤖 Assistente
+              </Link>
+            )}
             {admin && (
               <Link href="/admin" className="text-sm text-emerald-400 hover:text-emerald-300 font-medium transition-colors">
                 ⚙ Admin
