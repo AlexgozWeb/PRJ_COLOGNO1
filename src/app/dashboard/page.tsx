@@ -192,7 +192,7 @@ export default async function DashboardPage(props: PageProps<'/dashboard'>) {
                   Storico cancellazioni
                 </span>
               </div>
-              <div className="text-sm font-medium text-slate-400 dark:text-slate-500">👁 Solo lettura</div>
+              <div className="text-sm font-medium text-slate-400 dark:text-slate-500">{isAnnoAttivo ? "🗑 Eliminazione definitiva" : "👁 Solo lettura"}</div>
             </Link>
           )}
         </div>

@@ -53,6 +53,11 @@ export async function listAllegatiCancellati(anno: string, idNota: string): Prom
   })
 }
 
+export async function deleteArchivedAllegati(anno: string, idNota: string): Promise<void> {
+  const { blobs } = await list({ prefix: `allegati/${anno}/cancellazioni/${idNota}/` })
+  if (blobs.length > 0) await del(blobs.map(b => b.url))
+}
+
 export async function deleteAllegato(url: string): Promise<void> {
   await del(url)
 }

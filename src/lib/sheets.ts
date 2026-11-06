@@ -56,15 +56,12 @@ function todayIt(): string {
   }).replace(",", "")
 }
 
-function generateIdNota(branca: Branca, existing: Movimento[], archivedIds: string[] = []): string {
+// L'ID è il massimo della stessa branca tra note presenti e storico, più 1
+function generateIdNota(branca: Branca, existing: Movimento[], archivedIds: string[]): string {
   const prefix = BRANCA_CODICE[branca]
   const nums = [...existing.map(m => m.idNota), ...archivedIds]
-    .map(id => {
-      if (!id?.startsWith(prefix)) return 0
-      return parseInt(id.slice(prefix.length)) || 0
-    })
-    .filter(n => n > 0)
-  const max = nums.length > 0 ? Math.max(...nums) : 0
+    .map(id => (id?.startsWith(prefix) ? parseInt(id.slice(prefix.length)) || 0 : 0))
+  const max = Math.max(0, ...nums)
   return `${prefix}${String(max + 1).padStart(3, "0")}`
 }
 
@@ -165,6 +162,42 @@ export async function getStorico(spreadsheetId: string): Promise<MovimentoStoric
       cancellatoDa: row[15] || "",
       cancellatoIl: row[16] || "",
     }))
+}
+
+// Cancellazione definitiva di una riga dello storico: le righe sotto scorrono in su su B:Q, l'ultima viene svuotata
+export async function deleteStoricoRow(spreadsheetId: string, rowNumber: number, expectedIdNota: string): Promise<void> {
+  const sheets = getSheetsClient()
+  const title = await getStoricoTitle(spreadsheetId)
+
+  const check = await sheets.spreadsheets.values.get({ spreadsheetId, range: `'${title}'!J${rowNumber}` })
+  const current = (check.data.values?.[0]?.[0] ?? "").toString().trim()
+  if (current !== expectedIdNota) throw new StaleRowError()
+
+  const rows = await getStorico(spreadsheetId)
+  const last = Math.max(rows.length > 0 ? rows[rows.length - 1].id : rowNumber, rowNumber)
+
+  let below: unknown[][] = []
+  if (last > rowNumber) {
+    const res = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: `'${title}'!B${rowNumber + 1}:Q${last}`,
+      valueRenderOption: "UNFORMATTED_VALUE",
+    })
+    below = (res.data.values || []) as unknown[][]
+  }
+
+  const block: unknown[][] = []
+  for (let i = 0; i <= last - rowNumber; i++) {
+    const src = below[i]
+    block.push(Array.from({ length: 16 }, (_, c) => src?.[c] ?? ""))
+  }
+
+  await sheets.spreadsheets.values.update({
+    spreadsheetId,
+    range: `'${title}'!B${rowNumber}:Q${last}`,
+    valueInputOption: "USER_ENTERED",
+    requestBody: { values: block },
+  })
 }
 
 export async function getMovimenti(spreadsheetId: string, branca: Branca): Promise<Movimento[]> {

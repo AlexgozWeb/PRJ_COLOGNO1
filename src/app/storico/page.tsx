@@ -61,7 +61,7 @@ export default async function StoricoPage(props: { searchParams: Promise<{ [key:
 
       <main className="max-w-6xl mx-auto px-2 sm:px-6 py-4 sm:py-8">
         <AutoRefresh intervalMs={10000} />
-        <StoricoTable movimenti={movimenti} liste={liste} fileId={fileId} />
+        <StoricoTable movimenti={movimenti} liste={liste} fileId={fileId} canDelete={isAnnoAttivo} />
       </main>
     </div>
   )
