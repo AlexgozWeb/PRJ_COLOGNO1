@@ -951,10 +951,10 @@ export default function MovimentiTable({ movimenti, branca, canEdit, maxAttachme
               </p>
               {selected.idNota && (
                 <p className="text-xs text-orange-600 dark:text-orange-400 text-center mt-1">
-                  Verranno eliminati anche gli allegati dallo storage.
+                  Gli allegati verranno spostati nell&apos;archivio delle cancellazioni.
                 </p>
               )}
-              <p className="text-xs text-red-600 dark:text-red-400 text-center mt-2">Questa operazione non è reversibile.</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 text-center mt-2">La nota verrà salvata nello storico cancellazioni.</p>
 
               {error && (
                 <div className="mt-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-lg px-3 py-2 text-sm text-red-700 dark:text-red-300">

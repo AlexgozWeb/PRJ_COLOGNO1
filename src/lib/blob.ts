@@ -45,6 +45,14 @@ export async function listAllegati(anno: string, branca: Branca, idNota: string)
   })
 }
 
+export async function listAllegatiCancellati(anno: string, idNota: string): Promise<AllegatoFile[]> {
+  const { blobs } = await list({ prefix: `allegati/${anno}/cancellazioni/${idNota}/` })
+  return blobs.map(b => {
+    const name = b.pathname.split("/").pop() || b.pathname
+    return { id: b.url, name, mimeType: mimeFromExt(name) }
+  })
+}
+
 export async function deleteAllegato(url: string): Promise<void> {
   await del(url)
 }

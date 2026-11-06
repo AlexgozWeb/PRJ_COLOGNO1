@@ -53,6 +53,12 @@ export interface Movimento {
   creatoIl: string     // colonna O (DD/MM/YYYY)
 }
 
+export interface MovimentoStorico extends Movimento {
+  branca: string        // colonna I: foglio di provenienza
+  cancellatoDa: string  // colonna P
+  cancellatoIl: string  // colonna Q
+}
+
 export interface Permessi {
   [email: string]: Record<Branca, boolean>
 }

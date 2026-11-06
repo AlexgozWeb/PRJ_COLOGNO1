@@ -1,5 +1,5 @@
 import { getSheetsClient } from "./google-auth"
-import { Movimento, Branca, BRANCA_CODICE } from "@/types"
+import { Movimento, MovimentoStorico, Branca, BRANCA_CODICE } from "@/types"
 
 
 function parseImporto(raw: string): number {
@@ -137,6 +137,34 @@ export async function getBrancheDisponibili(spreadsheetId: string, branche: Bran
   } catch {
     return new Set(branche)
   }
+}
+
+export async function hasStorico(spreadsheetId: string): Promise<boolean> {
+  try {
+    await getStoricoTitle(spreadsheetId)
+    return true
+  } catch {
+    return false
+  }
+}
+
+export async function getStorico(spreadsheetId: string): Promise<MovimentoStorico[]> {
+  const title = await getStoricoTitle(spreadsheetId)
+  const response = await getSheetsClient().spreadsheets.values.get({
+    spreadsheetId,
+    range: `'${title}'!A1:Q`,
+  })
+  const rows = (response.data.values || []) as string[][]
+  return rows
+    .map((row, index) => ({ row, sheetRow: index + 1 }))
+    .filter(({ row }) => isDataRow(row))
+    .map(({ row, sheetRow }) => ({
+      ...rowToMovimento(row, sheetRow - 1),
+      status: "",
+      branca: (row[8] || "").trim(),
+      cancellatoDa: row[15] || "",
+      cancellatoIl: row[16] || "",
+    }))
 }
 
 export async function getMovimenti(spreadsheetId: string, branca: Branca): Promise<Movimento[]> {

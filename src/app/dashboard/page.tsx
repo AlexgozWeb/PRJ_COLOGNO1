@@ -6,7 +6,7 @@ import { authOptions } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { getConfig, isAdmin, getUserPermessi, getAnnoAttivoName, listBilanci } from "@/lib/config"
 import { BRANCHE, BRANCA_LABELS, Branca } from "@/types"
-import { getBrancheDisponibili } from "@/lib/sheets"
+import { getBrancheDisponibili, hasStorico } from "@/lib/sheets"
 import Link from "next/link"
 import SignOutButton from "@/components/SignOutButton"
 import AnnoSelector from "@/components/AnnoSelector"
@@ -91,6 +91,7 @@ export default async function DashboardPage(props: PageProps<'/dashboard'>) {
   const brancheDisponibili = selectedFileId
     ? await getBrancheDisponibili(selectedFileId, BRANCHE)
     : new Set<Branca>(BRANCHE)
+  const hasStoricoSheet = admin && selectedFileId ? await hasStorico(selectedFileId) : false
 
   return (
     <div className="min-h-screen bg-slate-100 dark:bg-slate-900">
@@ -180,6 +181,20 @@ export default async function DashboardPage(props: PageProps<'/dashboard'>) {
               </Link>
             )
           })}
+          {admin && hasStoricoSheet && (
+            <Link
+              href={`/storico${isAnnoAttivo ? "" : `?fileId=${selectedFileId}`}`}
+              className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-4 sm:p-6 hover:shadow-lg transition-all border-l-4 border-l-slate-400 block group"
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <span className="text-2xl">🗑️</span>
+                <span className="font-bold text-slate-800 dark:text-slate-100 text-base group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">
+                  Storico cancellazioni
+                </span>
+              </div>
+              <div className="text-sm font-medium text-slate-400 dark:text-slate-500">👁 Solo lettura</div>
+            </Link>
+          )}
         </div>
       </main>
     </div>
