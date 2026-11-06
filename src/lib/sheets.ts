@@ -56,16 +56,75 @@ function todayIt(): string {
   }).replace(",", "")
 }
 
-function generateIdNota(branca: Branca, existing: Movimento[]): string {
+function generateIdNota(branca: Branca, existing: Movimento[], archivedIds: string[] = []): string {
   const prefix = BRANCA_CODICE[branca]
-  const nums = existing
-    .map(m => {
-      if (!m.idNota?.startsWith(prefix)) return 0
-      return parseInt(m.idNota.slice(prefix.length)) || 0
+  const nums = [...existing.map(m => m.idNota), ...archivedIds]
+    .map(id => {
+      if (!id?.startsWith(prefix)) return 0
+      return parseInt(id.slice(prefix.length)) || 0
     })
     .filter(n => n > 0)
   const max = nums.length > 0 ? Math.max(...nums) : 0
   return `${prefix}${String(max + 1).padStart(3, "0")}`
+}
+
+const STORICO_TITLE = "storico cancellazioni"
+const STORICO_FIRST_ROW = 4
+
+async function getStoricoTitle(spreadsheetId: string): Promise<string> {
+  const sheets = getSheetsClient()
+  const res = await sheets.spreadsheets.get({ spreadsheetId, fields: "properties.title,sheets.properties.title" })
+  const title = (res.data.sheets || []).map(s => s.properties?.title || "").find(t => t.trim().toLowerCase() === STORICO_TITLE)
+  if (!title) throw new Error(`Per il file "${res.data.properties?.title || spreadsheetId}" la cancellazione non è prevista (manca il foglio "Storico Cancellazioni"). Nota non eliminata.`)
+  return title
+}
+
+// ID nota già archiviati: servono perché un ID cancellato non venga riassegnato a una nuova nota
+async function getArchivedIdNota(spreadsheetId: string): Promise<string[]> {
+  try {
+    const title = await getStoricoTitle(spreadsheetId)
+    const res = await getSheetsClient().spreadsheets.values.get({ spreadsheetId, range: `'${title}'!J${STORICO_FIRST_ROW}:J` })
+    return ((res.data.values || []) as string[][]).map(r => (r[0] || "").trim()).filter(Boolean)
+  } catch {
+    return []
+  }
+}
+
+// Copia la nota (valori grezzi di B:H e J:O) nello storico, con branca, autore e data della cancellazione
+async function archiviaNota(spreadsheetId: string, branca: Branca, rowNumber: number, userEmail: string): Promise<void> {
+  const sheets = getSheetsClient()
+  const title = await getStoricoTitle(spreadsheetId)
+
+  const src = await sheets.spreadsheets.values.get({
+    spreadsheetId,
+    range: `${branca}!B${rowNumber}:O${rowNumber}`,
+    valueRenderOption: "UNFORMATTED_VALUE",
+  })
+  const row = ((src.data.values?.[0]) || []) as unknown[]
+  if (row.every(c => c === "" || c == null)) return
+  const cell = (i: number) => row[i] ?? ""
+
+  // Le righe dello storico sono preformattate: si cerca la prima libera in B/J invece di usare append
+  const used = await sheets.spreadsheets.values.get({ spreadsheetId, range: `'${title}'!B${STORICO_FIRST_ROW}:J` })
+  const usedRows = (used.data.values || []) as string[][]
+  let last = 0
+  usedRows.forEach((r, i) => { if (r.some(c => String(c ?? "").trim() !== "")) last = i + 1 })
+  const target = STORICO_FIRST_ROW + last
+
+  // B:H dati, I branca, J:O (ID_NOTA, Allegati, audit), P cancellato da, Q cancellato il
+  await sheets.spreadsheets.values.update({
+    spreadsheetId,
+    range: `'${title}'!B${target}:Q${target}`,
+    valueInputOption: "USER_ENTERED",
+    requestBody: {
+      values: [[
+        cell(0), cell(1), cell(2), cell(3), cell(4), cell(5), cell(6),
+        branca,
+        cell(8), cell(9), cell(10), cell(11), cell(12), cell(13),
+        userName(userEmail), todayIt(),
+      ]],
+    },
+  })
 }
 
 // Elenco delle branche con un foglio nel file; se la lettura fallisce le considera tutte presenti
@@ -102,7 +161,7 @@ export async function addMovimento(
   const sheets = getSheetsClient()
   const existing = await getMovimenti(spreadsheetId, branca)
   const nextNum = existing.length + 1
-  const idNota = generateIdNota(branca, existing)
+  const idNota = generateIdNota(branca, existing, await getArchivedIdNota(spreadsheetId))
 
   const lastId = existing.length > 0 ? existing[existing.length - 1].id : 3
   const targetRow = lastId + 1
@@ -199,6 +258,7 @@ export async function deleteMovimento(
   spreadsheetId: string,
   branca: Branca,
   rowNumber: number,
+  userEmail: string,
   expectedIdNota?: string
 ): Promise<void> {
   const sheets = getSheetsClient()
@@ -212,6 +272,9 @@ export async function deleteMovimento(
     const current = (check.data.values?.[0]?.[0] ?? "").toString().trim()
     if (current !== expectedIdNota) throw new StaleRowError()
   }
+
+  // Se l'archiviazione fallisce la nota non viene toccata
+  await archiviaNota(spreadsheetId, branca, rowNumber, userEmail)
 
   const movimenti = await getMovimenti(spreadsheetId, branca)
   const lastDataRow = movimenti.length > 0 ? movimenti[movimenti.length - 1].id : rowNumber

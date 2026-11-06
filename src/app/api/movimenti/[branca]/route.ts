@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { getConfig, isAdmin, getUserPermessi, getAnnoAttivoName, getListeValori } from "@/lib/config"
 import { getMovimenti, addMovimento, updateMovimento, deleteMovimento, StaleRowError } from "@/lib/sheets"
-import { deleteNotaAllegati, parseAnnoFromFileName } from "@/lib/blob"
+import { archiveNotaAllegati, parseAnnoFromFileName } from "@/lib/blob"
 import { logError } from "@/lib/logger"
 import { Branca } from "@/types"
 
@@ -131,17 +131,17 @@ export async function DELETE(
     const config = await getConfig()
     if (!config.annoAttivo) return errResponse("Anno attivo non configurato")
 
-    await deleteMovimento(config.annoAttivo, branca as Branca, rowNumber, idNota || undefined)
+    await deleteMovimento(config.annoAttivo, branca as Branca, rowNumber, auth.email, idNota || undefined)
 
     let warning: string | undefined
     if (idNota) {
       try {
         const spreadsheetName = await getAnnoAttivoName(config.annoAttivo)
         const annoFolder = parseAnnoFromFileName(spreadsheetName)
-        if (annoFolder) await deleteNotaAllegati(annoFolder, branca as Branca, idNota)
+        if (annoFolder) await archiveNotaAllegati(annoFolder, branca as Branca, idNota)
       } catch (e) {
-        warning = `Nota eliminata, ma gli allegati (${idNota}) non sono stati rimossi da Vercel Blob. Contatta l'amministratore.`
-        await logError({ tipo: "App", route: `DELETE /api/movimenti/${branca}`, branca, messaggio: `Eliminazione allegati blob fallita per ${idNota}`, stack: e instanceof Error ? e.stack : undefined })
+        warning = `Nota eliminata, ma gli allegati (${idNota}) non sono stati spostati nella cartella cancellazioni. Contatta l'amministratore.`
+        await logError({ tipo: "App", route: `DELETE /api/movimenti/${branca}`, branca, messaggio: `Spostamento allegati in cancellazioni fallito per ${idNota}`, stack: e instanceof Error ? e.stack : undefined })
       }
     }
 

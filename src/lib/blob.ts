@@ -1,4 +1,4 @@
-import { put, list, del } from "@vercel/blob"
+import { put, list, del, copy } from "@vercel/blob"
 import { Branca, BRANCA_CODICE, AllegatoFile } from "@/types"
 
 export type { AllegatoFile }
@@ -49,11 +49,12 @@ export async function deleteAllegato(url: string): Promise<void> {
   await del(url)
 }
 
-/** Elimina tutti gli allegati di una nota (quando si cancella il movimento). */
-export async function deleteNotaAllegati(anno: string, branca: Branca, idNota: string): Promise<void> {
-  const prefix = notaPrefix(anno, branca, idNota)
-  const { blobs } = await list({ prefix })
-  if (blobs.length > 0) {
-    await del(blobs.map(b => b.url))
+/** Sposta gli allegati di una nota cancellata in allegati/{anno}/cancellazioni/{idNota}/ (copia, poi elimina l'originale). */
+export async function archiveNotaAllegati(anno: string, branca: Branca, idNota: string): Promise<void> {
+  const { blobs } = await list({ prefix: notaPrefix(anno, branca, idNota) })
+  for (const b of blobs) {
+    const name = b.pathname.split("/").pop() || b.pathname
+    await copy(b.url, `allegati/${anno}/cancellazioni/${idNota}/${name}`, { access: "public", addRandomSuffix: false, allowOverwrite: true })
+    await del(b.url)
   }
 }
