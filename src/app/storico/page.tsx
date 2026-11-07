@@ -1,6 +1,7 @@
 export const instant = false
 
 import { getServerSession } from "next-auth"
+import { connection } from "next/server"
 import { authOptions } from "@/lib/auth"
 import { redirect, notFound } from "next/navigation"
 import { getConfig, isAdmin, getAnnoAttivoName, getListeValori } from "@/lib/config"
@@ -11,6 +12,7 @@ import AutoRefresh from "@/components/AutoRefresh"
 
 export default async function StoricoPage(props: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
   const searchParams = await props.searchParams
+  await connection()
   const session = await getServerSession(authOptions)
   if (!session?.user?.email) redirect("/login")
   if (!(await isAdmin(session.user.email))) notFound()

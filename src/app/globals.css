@@ -24,3 +24,10 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Menu laterale aperto: su schermi larghi il contenuto si sposta a destra */
+@media (min-width: 640px) {
+  html[data-menu-open] body {
+    padding-left: 18rem;
+  }
+}

@@ -1,6 +1,7 @@
 export const instant = false
 
 import { getServerSession } from "next-auth"
+import { connection } from "next/server"
 import { authOptions } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import AppHeader from "@/components/AppHeader"
@@ -8,6 +9,7 @@ import { canUseChatbot } from "@/features/chatbot/settings"
 import ChatPanel from "@/features/chatbot/ChatPanel"
 
 export default async function ChatbotPage() {
+  await connection()
   const session = await getServerSession(authOptions)
   const email = session?.user?.email
   if (!email) redirect("/login")

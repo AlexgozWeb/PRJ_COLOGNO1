@@ -1,5 +1,6 @@
 import Link from "next/link"
 import ThemeToggle from "./ThemeToggle"
+import SideMenu from "./SideMenu"
 
 interface Props {
   /** Se presente mostra il pulsante ← backLabel a sinistra del toggle */
@@ -20,6 +21,8 @@ export default function AppHeader({ backHref, backLabel = "Dashboard", children,
   return (
     <header className="bg-slate-800 shadow-lg">
       <div className="max-w-6xl mx-auto px-3 sm:px-8 py-2 sm:py-4 flex flex-wrap items-center gap-x-3 gap-y-2 sm:gap-4">
+
+        <SideMenu />
 
         {/* Gruppo logo — sempre presente, cliccabile → dashboard */}
         <Link href="/dashboard" className="flex items-center gap-2 sm:gap-3 flex-shrink-0 group">

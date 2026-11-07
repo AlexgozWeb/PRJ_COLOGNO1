@@ -1,6 +1,7 @@
 export const instant = false
 
 import { getServerSession } from "next-auth"
+import { connection } from "next/server"
 import { authOptions } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { isAdmin } from "@/lib/config"
@@ -16,6 +17,7 @@ const TIPO_COLORS: Record<string, string> = {
 }
 
 export default async function LogPage() {
+  await connection()
   const session = await getServerSession(authOptions)
   if (!session?.user?.email) redirect("/login")
   const admin = await isAdmin(session.user.email!)

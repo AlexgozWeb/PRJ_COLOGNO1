@@ -1,6 +1,7 @@
 export const instant = false
 
 import { getServerSession } from "next-auth"
+import { connection } from "next/server"
 import { authOptions } from "@/lib/auth"
 import { redirect, notFound } from "next/navigation"
 import { getConfig, isAdmin, getUserPermessi, getAnnoAttivoName } from "@/lib/config"
@@ -42,6 +43,7 @@ export default async function NotaDetailPage({
 
   if (!BRANCHE.includes(branca)) notFound()
 
+  await connection()
   const session = await getServerSession(authOptions)
   if (!session?.user?.email) redirect("/login")
 

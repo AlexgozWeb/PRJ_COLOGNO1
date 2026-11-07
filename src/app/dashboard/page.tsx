@@ -2,6 +2,7 @@ export const instant = false
 
 import React from "react"
 import { getServerSession } from "next-auth"
+import { connection } from "next/server"
 import { authOptions } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { getConfig, isAdmin, getUserPermessi, getAnnoAttivoName, listBilanci } from "@/lib/config"
@@ -72,6 +73,7 @@ const BRANCA_COLORS: Record<Branca, string> = {
 
 export default async function DashboardPage(props: PageProps<'/dashboard'>) {
   const searchParams = await props.searchParams
+  await connection()
   const session = await getServerSession(authOptions)
   if (!session?.user?.email) redirect("/login")
 
