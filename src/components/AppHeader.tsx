@@ -1,4 +1,8 @@
 import Link from "next/link"
+import { getServerSession } from "next-auth"
+import { connection } from "next/server"
+import { authOptions } from "@/lib/auth"
+import { canUseChatbot } from "@/features/chatbot/settings"
 import ThemeToggle from "./ThemeToggle"
 import SideMenu from "./SideMenu"
 
@@ -17,12 +21,16 @@ interface Props {
  * Struttura:
  *   [Logo + "Nota Spese DEV" + "Gruppo Scout Cologno 1"] | [children]  ···  [← back] [ThemeToggle] [rightContent]
  */
-export default function AppHeader({ backHref, backLabel = "Dashboard", children, rightContent }: Props) {
+export default async function AppHeader({ backHref, backLabel = "Dashboard", children, rightContent }: Props) {
+  await connection()
+  const session = await getServerSession(authOptions)
+  const chatbot = session?.user?.email ? await canUseChatbot(session.user.email) : false
+
   return (
     <header className="bg-slate-800 shadow-lg">
       <div className="max-w-6xl mx-auto px-3 sm:px-8 py-2 sm:py-4 flex flex-wrap items-center gap-x-3 gap-y-2 sm:gap-4">
 
-        <SideMenu />
+        <SideMenu chatbot={chatbot} />
 
         {/* Gruppo logo — sempre presente, cliccabile → dashboard */}
         <Link href="/dashboard" className="flex items-center gap-2 sm:gap-3 flex-shrink-0 group">

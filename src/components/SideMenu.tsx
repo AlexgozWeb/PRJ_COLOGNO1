@@ -24,7 +24,10 @@ function setOpen(value: boolean) {
   window.dispatchEvent(new Event(EVENT))
 }
 
-export default function SideMenu() {
+const itemCls = "flex items-center px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+const iconCls = "w-8 flex-shrink-0 inline-flex items-center text-lg"
+
+export default function SideMenu({ chatbot = false }: { chatbot?: boolean }) {
   const open = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
   const { data: session } = useSession()
 
@@ -62,25 +65,27 @@ export default function SideMenu() {
           <div className="text-xs text-slate-500 dark:text-slate-400 truncate">{email}</div>
         </div>
         <hr className="border-slate-200 dark:border-slate-600 my-2" />
-        <Link
-          href="/dashboard"
-          className="px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-        >
-          Branche
+        <Link href="/dashboard" className={itemCls}>
+          <span className={iconCls}>⚜️</span>Branche
         </Link>
-        <Link
-          href="/report"
-          className="px-3 py-2.5 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-        >
+        <Link href="/report" className={itemCls}>
+          <span className={iconCls}>
+            <img src="/icon-prima-nota.png" alt="" width={22} height={22} className="w-[22px] h-[22px]" />
+          </span>
           Report
         </Link>
+        {chatbot && (
+          <Link href="/chatbot" className={itemCls}>
+            <span className={iconCls}>🤖</span>Assistente AI
+          </Link>
+        )}
         <hr className="border-slate-200 dark:border-slate-600 my-2" />
         <button
           type="button"
           onClick={() => signOut({ callbackUrl: "/login" })}
-          className="text-left px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+          className="flex items-center text-left px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
         >
-          Esci
+          <span className={iconCls}>🚪</span>Esci
         </button>
       </nav>
     </>
