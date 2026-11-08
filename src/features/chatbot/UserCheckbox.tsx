@@ -1,7 +1,9 @@
 "use client"
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 
 export default function ChatbotUserCheckbox({ email, initial }: { email: string; initial: boolean }) {
+  const router = useRouter()
   const [checked, setChecked] = useState(initial)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState("")
@@ -21,6 +23,7 @@ export default function ChatbotUserCheckbox({ email, initial }: { email: string;
         const data = await res.json().catch(() => ({}))
         throw new Error(data.error || `Errore HTTP ${res.status}`)
       }
+      router.refresh()
     } catch (e) {
       setChecked(!next)
       setErr(e instanceof Error ? e.message : "Errore")

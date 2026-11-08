@@ -1,5 +1,6 @@
 "use client"
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 
 async function save(body: object) {
   const res = await fetch("/api/chatbot/settings", {
@@ -14,6 +15,7 @@ async function save(body: object) {
 }
 
 export default function ChatbotAdminToggle({ initial, model: initialModel, models }: { initial: boolean; model: string; models: string[] }) {
+  const router = useRouter()
   const [enabled, setEnabled] = useState(initial)
   const [savedModel, setSavedModel] = useState(initialModel)
   const [model, setModel] = useState(initialModel)
@@ -37,7 +39,7 @@ export default function ChatbotAdminToggle({ initial, model: initialModel, model
           <p className="text-xs text-slate-500">Chatbot per interrogare il bilancio. Utenti non admin: colonna «Chatbot_AI» del foglio Permessi.</p>
         </div>
         <button
-          onClick={() => run(async () => { await save({ enabled: !enabled }); setEnabled(!enabled) })}
+          onClick={() => run(async () => { await save({ enabled: !enabled }); setEnabled(!enabled); router.refresh() })}
           disabled={busy}
           className={`shrink-0 px-4 py-2 rounded-lg text-sm text-white disabled:opacity-50 ${enabled ? "bg-green-600" : "bg-slate-400"}`}
         >
