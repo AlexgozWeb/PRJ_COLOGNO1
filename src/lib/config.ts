@@ -1,6 +1,7 @@
 import { getSheetsClient, getDriveClient } from "./google-auth"
 import { unstable_cache, revalidateTag } from "next/cache"
 import { Config, Permessi, Branca, ListeValori, ValoreLista } from "@/types"
+import { IS_PRODUZIONE } from "./version"
 
 const CONFIG_SHEET_ID = process.env.APP_CONFIG_SHEET_ID!
 const BRANCHE: Branca[] = ['LC', 'CdA', 'EG', 'Novi', 'Clan', 'CoCa', 'Gruppo']
@@ -244,8 +245,12 @@ export const getConfig = unstable_cache(
     })
     const rows = (response.data.values || []) as string[][]
 
-    const annoAttivo = rows[0]?.[1] || ""
-    const adminEmails = (rows[1]?.[1] || "")
+    // Lettura per nome (colonna A); se manca, ripiego sulla posizione storica (riga 1 e 2)
+    const valore = (chiave: string) => rows.find(r => r[0]?.trim().toLowerCase() === chiave)?.[1]
+    const annoProd = valore("anno_attivo") ?? rows[0]?.[1] ?? ""
+    const annoDev = valore("anno_attivo_dev") || ""
+    const annoAttivo = IS_PRODUZIONE ? annoProd : (annoDev || annoProd)
+    const adminEmails = (valore("admin_emails") ?? rows[1]?.[1] ?? "")
       .split(",")
       .map(e => e.trim())
       .filter(Boolean)
@@ -287,12 +292,34 @@ export async function listBilanci(): Promise<{ id: string; name: string }[]> {
 
 export async function setAnnoAttivo(fileId: string): Promise<void> {
   const sheets = getSheetsClient()
-  await sheets.spreadsheets.values.update({
+  const chiave = IS_PRODUZIONE ? "anno_attivo" : "anno_attivo_dev"
+  const res = await sheets.spreadsheets.values.get({
     spreadsheetId: CONFIG_SHEET_ID,
-    range: "Impostazioni!B1",
-    valueInputOption: "RAW",
-    requestBody: { values: [[fileId]] },
+    range: "Impostazioni!A:A",
   })
+  const idx = ((res.data.values || []) as string[][]).findIndex(r => r[0]?.trim().toLowerCase() === chiave)
+  if (idx >= 0) {
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: CONFIG_SHEET_ID,
+      range: `Impostazioni!B${idx + 1}`,
+      valueInputOption: "RAW",
+      requestBody: { values: [[fileId]] },
+    })
+  } else if (IS_PRODUZIONE) {
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: CONFIG_SHEET_ID,
+      range: "Impostazioni!B1",
+      valueInputOption: "RAW",
+      requestBody: { values: [[fileId]] },
+    })
+  } else {
+    await sheets.spreadsheets.values.append({
+      spreadsheetId: CONFIG_SHEET_ID,
+      range: "Impostazioni!A:B",
+      valueInputOption: "RAW",
+      requestBody: { values: [[chiave, fileId]] },
+    })
+  }
   revalidateTag("config", { expire: 0 })
 }
 

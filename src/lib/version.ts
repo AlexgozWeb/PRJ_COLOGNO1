@@ -1,7 +1,9 @@
 const branch = process.env.NEXT_PUBLIC_APP_BRANCH
 const commit = process.env.NEXT_PUBLIC_APP_COMMIT
 
-// Il suffisso -dev compare ovunque l'app non giri dal branch master (dev e locale)
-export const APP_VERSION = `v${process.env.NEXT_PUBLIC_APP_VERSION}${branch === "master" ? "" : "-dev"}`
+// Produzione = deploy dal branch master. Dev e locale (nessun branch) sono ambiente di sviluppo.
+export const IS_PRODUZIONE = branch === "master"
+
+export const APP_VERSION = `v${process.env.NEXT_PUBLIC_APP_VERSION}${IS_PRODUZIONE ? "" : "-dev"}`
 
 export const APP_VERSION_FULL = commit ? `${APP_VERSION} · ${commit}` : APP_VERSION
