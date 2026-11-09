@@ -69,7 +69,13 @@ function LoginContent() {
           </svg>
           Accedi con Google
         </button>
-        <p className="mt-6 text-xs text-slate-400">Accesso riservato ai membri del gruppo</p>
+        <a
+          href="/guida"
+          className="mt-4 inline-flex items-center gap-1.5 text-sm text-emerald-700 hover:text-emerald-800 hover:underline"
+        >
+          📖 Scopri come funziona l&apos;app: Guida
+        </a>
+        <p className="mt-5 text-xs text-slate-400">Accesso riservato ai membri del gruppo</p>
         <p className="mt-2 text-[11px] text-slate-300">{APP_VERSION}</p>
       </div>
     </div>

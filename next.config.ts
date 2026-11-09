@@ -10,7 +10,9 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_APP_COMMIT: (process.env.VERCEL_GIT_COMMIT_SHA ?? "").slice(0, 7),
     NEXT_PUBLIC_APP_COMMIT_MSG: (process.env.VERCEL_GIT_COMMIT_MESSAGE ?? "").split("\n")[0].trim(),
   },
-  /* config options here */
+  async rewrites() {
+    return [{ source: "/guida", destination: "/guida.html" }]
+  },
   cacheComponents: true,
   partialPrefetching: true,
   turbopack: {
