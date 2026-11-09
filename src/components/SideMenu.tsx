@@ -3,6 +3,7 @@
 import { useEffect, useSyncExternalStore } from "react"
 import Link from "next/link"
 import { signOut, useSession } from "next-auth/react"
+import { APP_VERSION } from "@/lib/version"
 
 const STORAGE_KEY = "nsc1-menu-aperto"
 const EVENT = "nsc1-menu-change"
@@ -87,7 +88,8 @@ export default function SideMenu({ chatbot = false }: { chatbot?: boolean }) {
         >
           <span className={iconCls}>🚪</span>Esci
         </button>
-      </nav>
+                  <div className="mt-auto px-2 pt-3 text-xs text-slate-400">{APP_VERSION}</div>
+                </nav>
     </>
   )
 }

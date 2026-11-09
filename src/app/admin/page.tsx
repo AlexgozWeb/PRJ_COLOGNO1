@@ -13,6 +13,7 @@ import AppHeader from "@/components/AppHeader"
 import Link from "next/link"
 import { getChatbotEnabled, getChatbotModel, getChatbotUsers, listChatbotModels } from "@/features/chatbot/settings"
 import ChatbotAdminToggle from "@/features/chatbot/AdminToggle"
+import { APP_VERSION_FULL } from "@/lib/version"
 
 const TIPO_COLORS: Record<string, string> = {
   Drive:  "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300",
@@ -52,6 +53,7 @@ export default async function AdminPage() {
       </AppHeader>
 
       <main className="max-w-5xl mx-auto px-6 py-10 space-y-6">
+        <p className="text-xs text-slate-400 text-right">Versione app: {APP_VERSION_FULL}</p>
         <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-6 border border-slate-200 dark:border-slate-700">
           <div className="flex items-center gap-2 mb-1">
             <span className="text-base">📅</span>

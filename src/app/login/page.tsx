@@ -4,6 +4,7 @@ import { signIn, useSession } from "next-auth/react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect } from "react"
 import { Suspense } from "react"
+import { APP_VERSION } from "@/lib/version"
 
 function LoginContent() {
   const { data: session, status } = useSession()
@@ -63,6 +64,7 @@ function LoginContent() {
           Accedi con Google
         </button>
         <p className="mt-6 text-xs text-slate-400">Accesso riservato ai membri del gruppo</p>
+        <p className="mt-2 text-[11px] text-slate-300">{APP_VERSION}</p>
       </div>
     </div>
   )
