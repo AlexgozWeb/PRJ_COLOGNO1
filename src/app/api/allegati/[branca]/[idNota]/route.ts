@@ -5,7 +5,7 @@ import { getConfig, isAdmin, getUserPermessi, getAnnoAttivoName } from "@/lib/co
 import { uploadAllegato, listAllegati, deleteAllegato, parseAnnoFromFileName } from "@/lib/blob"
 import { logError } from "@/lib/logger"
 import { setAllegatiFlag } from "@/lib/sheets"
-import { Branca } from "@/types"
+import { Branca, BRANCA_CODICE } from "@/types"
 
 const BRANCHE_VALIDE: Branca[] = ['LC', 'CdA', 'EG', 'Novi', 'Clan', 'CoCa', 'Gruppo']
 const ALLOWED_MIME = new Set(["image/jpeg", "image/png", "application/pdf"])
@@ -114,16 +114,34 @@ export async function DELETE(
     if (!auth) return errResponse("Non autorizzato", 401)
 
     const { fileUrl } = await req.json()
-    if (!fileUrl) return errResponse("fileUrl mancante", 400)
-
-    await deleteAllegato(fileUrl)
+    if (!fileUrl || typeof fileUrl !== "string") return errResponse("fileUrl mancante", 400)
 
     const config = await getConfig()
     const anno = config.annoAttivo ? await getAnno(config.annoAttivo) : null
-    if (anno) {
-      const rimasti = await listAllegati(anno, branca as Branca, idNota)
-      await syncAllegatiFlag(config.annoAttivo, branca as Branca, idNota, rimasti.length > 0)
+    if (!anno) return errResponse("Impossibile determinare l'anno dal file attivo")
+
+    // Il file deve appartenere a questa nota: allegati/{anno}/{codice branca}/{idNota}/
+    let parsed: URL
+    try {
+      parsed = new URL(fileUrl)
+    } catch {
+      return errResponse("URL non valido", 400)
     }
+    const prefix = `/allegati/${anno}/${BRANCA_CODICE[branca as Branca]}/${idNota}/`
+    if (
+      !/^[A-Za-z0-9_-]+$/.test(idNota) ||
+      parsed.protocol !== "https:" ||
+      !parsed.hostname.endsWith(".public.blob.vercel-storage.com") ||
+      !parsed.pathname.startsWith(prefix) ||
+      parsed.pathname.includes("..")
+    ) {
+      return errResponse("URL non valido", 400)
+    }
+
+    await deleteAllegato(parsed.toString())
+
+    const rimasti = await listAllegati(anno, branca as Branca, idNota)
+    await syncAllegatiFlag(config.annoAttivo, branca as Branca, idNota, rimasti.length > 0)
     return Response.json({ success: true })
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Errore interno"
