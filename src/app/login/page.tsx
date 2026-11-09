@@ -17,6 +17,12 @@ function LoginContent() {
     if (session) router.push("/dashboard")
   }, [session, router])
 
+  useEffect(() => {
+    if (status === "unauthenticated" && searchParams.get("cambio") === "1") {
+      signIn("google", undefined, { prompt: "select_account" })
+    }
+  }, [status, searchParams])
+
   if (status === "loading" || session) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-6 bg-gradient-to-br from-slate-800 via-slate-700 to-emerald-900">
@@ -52,7 +58,7 @@ function LoginContent() {
         )}
 
         <button
-          onClick={() => signIn("google")}
+          onClick={() => signIn("google", undefined, { prompt: "select_account" })}
           className="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 rounded-xl px-4 py-3 text-slate-700 font-medium hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm cursor-pointer"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">

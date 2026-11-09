@@ -83,13 +83,20 @@ export default function SideMenu({ chatbot = false }: { chatbot?: boolean }) {
         <hr className="border-slate-200 dark:border-slate-600 my-2" />
         <button
           type="button"
+          onClick={() => signOut({ callbackUrl: "/login?cambio=1" })}
+          className={`${itemCls} w-full text-left`}
+        >
+          <span className={iconCls}>🔄</span>Cambia utente
+        </button>
+        <button
+          type="button"
           onClick={() => signOut({ callbackUrl: "/login" })}
           className="flex items-center text-left px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
         >
           <span className={iconCls}>🚪</span>Esci
         </button>
-                  <div className="mt-auto px-2 pt-3 text-xs text-slate-400">{APP_VERSION}</div>
-                </nav>
+        <div className="mt-auto px-2 pt-3 text-xs text-slate-400">{APP_VERSION}</div>
+      </nav>
     </>
   )
 }
