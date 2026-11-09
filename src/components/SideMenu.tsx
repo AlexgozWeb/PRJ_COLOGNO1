@@ -81,6 +81,10 @@ export default function SideMenu({ chatbot = false }: { chatbot?: boolean }) {
           </Link>
         )}
         <hr className="border-slate-200 dark:border-slate-600 my-2" />
+        <Link href="/guida" className={itemCls}>
+          <span className={iconCls}>📖</span>Guida
+        </Link>
+        <hr className="border-slate-200 dark:border-slate-600 my-2" />
         <button
           type="button"
           onClick={() => signOut({ callbackUrl: "/login?cambio=1" })}
