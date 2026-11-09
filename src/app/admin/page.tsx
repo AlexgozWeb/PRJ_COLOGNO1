@@ -10,6 +10,7 @@ import PermessiManager from "@/components/PermessiManager"
 import ListaValoriManager from "@/components/ListaValoriManager"
 import AnnoAttivoSelector from "@/components/AnnoAttivoSelector"
 import AppHeader from "@/components/AppHeader"
+import AdminSection from "@/components/AdminSection"
 import Link from "next/link"
 import { getChatbotEnabled, getChatbotModel, getChatbotUsers, listChatbotModels } from "@/features/chatbot/settings"
 import ChatbotAdminToggle from "@/features/chatbot/AdminToggle"
@@ -57,30 +58,28 @@ export default async function AdminPage() {
           Versione app: {APP_VERSION_FULL}
           {APP_COMMIT_MESSAGE && <><br />({APP_COMMIT_MESSAGE})</>}
         </p>
-        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-6 border border-slate-200 dark:border-slate-700">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-base">📅</span>
-            <h2 className="font-semibold text-slate-800 dark:text-slate-100">Anno attivo</h2>
-          </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 ml-6">Seleziona il file bilancio dell&apos;anno corrente su cui gli utenti possono operare.</p>
+        <AdminSection
+          icon={<span className="text-base">📅</span>}
+          title="Anno attivo"
+          description="Seleziona il file bilancio dell'anno corrente su cui gli utenti possono operare."
+        >
           <AnnoAttivoSelector
             bilanci={bilanci}
             annoAttivoId={config.annoAttivo ?? ""}
             annoAttivoName={annoAttivoName}
           />
-        </div>
+        </AdminSection>
 
-        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-6 border border-slate-200 dark:border-slate-700">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-base">👥</span>
-            <h2 className="font-semibold text-slate-800 dark:text-slate-100">Permessi utenti</h2>
-          </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 ml-6">Gestisci quali branche ogni utente può modificare.</p>
+        <AdminSection
+          icon={<span className="text-base">👥</span>}
+          title="Permessi utenti"
+          description="Gestisci quali branche ogni utente può modificare."
+        >
           <PermessiManager permessi={permessi} chatbotUsers={chatbotUsers} />
-        </div>
+        </AdminSection>
 
-        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-6 border border-slate-200 dark:border-slate-700">
-          <div className="flex items-center gap-2 mb-1">
+        <AdminSection
+          icon={
             <svg width="18" height="16" viewBox="0 0 24 20" aria-hidden="true" className="flex-shrink-0">
               <defs>
                 <linearGradient id="lista-valori-grad" x1="0" y1="0" x2="0" y2="1">
@@ -92,46 +91,45 @@ export default async function AdminPage() {
               <rect x="0" y="7.5" width="24" height="5" rx="2" fill="url(#lista-valori-grad)" />
               <rect x="0" y="15" width="24" height="5" rx="2" fill="url(#lista-valori-grad)" />
             </svg>
-            <h2 className="font-semibold text-slate-800 dark:text-slate-100">Lista Valori</h2>
-          </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 ml-6">Valori e colori di Modalità, Fondo e In/Out, letti dal foglio Lista Valori.</p>
+          }
+          title="Lista Valori"
+          description="Valori e colori di Modalità, Fondo e In/Out, letti dal foglio Lista Valori."
+        >
           <ListaValoriManager righe={listeAdmin.righe} palette={listeAdmin.palette} />
-        </div>
+        </AdminSection>
 
         <ChatbotAdminToggle initial={chatbotEnabled} model={chatbotModel} models={chatbotModels} />
 
-        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-6 border border-slate-200 dark:border-slate-700 opacity-60">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-base">💾</span>
-            <h2 className="font-semibold text-slate-800 dark:text-slate-100">Backup & Restore</h2>
-          </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 ml-6">Crea una copia di sicurezza del file attivo o ripristina una versione precedente.</p>
-          <p className="text-sm text-slate-400 dark:text-slate-500 italic ml-6">Funzionalità in arrivo…</p>
-        </div>
+        <AdminSection
+          className="opacity-60"
+          icon={<span className="text-base">💾</span>}
+          title="Backup & Restore"
+          description="Crea una copia di sicurezza del file attivo o ripristina una versione precedente."
+        >
+          <p className="text-sm text-slate-400 dark:text-slate-500 italic ml-5">Funzionalità in arrivo…</p>
+        </AdminSection>
 
         {/* Log errori */}
-        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm p-6 border border-slate-200 dark:border-slate-700">
-          <div className="flex items-center justify-between mb-1">
-            <div className="flex items-center gap-2">
-              <span className="text-base">🔴</span>
-              <h2 className="font-semibold text-slate-800 dark:text-slate-100">Errori recenti</h2>
-              {recentLogs.length > 0 && (
-                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300">
-                  {recentLogs.length}
-                </span>
-              )}
-            </div>
+        <AdminSection
+          icon={<span className="text-base">🔴</span>}
+          title="Errori recenti"
+          badge={recentLogs.length > 0 && (
+            <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300">
+              {recentLogs.length}
+            </span>
+          )}
+          action={
             <Link
               href="/admin/log"
-              className="text-sm text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 font-medium transition-colors"
+              className="text-sm text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 font-medium transition-colors flex-shrink-0"
             >
               Vedi log completo →
             </Link>
-          </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 ml-6">Ultimi 10 errori registrati dall&apos;applicazione.</p>
-
+          }
+          description="Ultimi 10 errori registrati dall'applicazione."
+        >
           {recentLogs.length === 0 ? (
-            <p className="text-sm text-slate-400 dark:text-slate-500 italic ml-6">Nessun errore registrato. 🎉</p>
+            <p className="text-sm text-slate-400 dark:text-slate-500 italic ml-5">Nessun errore registrato. 🎉</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
@@ -160,7 +158,7 @@ export default async function AdminPage() {
               </table>
             </div>
           )}
-        </div>
+        </AdminSection>
       </main>
     </div>
   )

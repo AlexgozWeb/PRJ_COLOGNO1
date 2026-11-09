@@ -1,6 +1,7 @@
 "use client"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { Chevron } from "@/components/AdminSection"
 
 async function save(body: object) {
   const res = await fetch("/api/chatbot/settings", {
@@ -16,6 +17,7 @@ async function save(body: object) {
 
 export default function ChatbotAdminToggle({ initial, model: initialModel, models }: { initial: boolean; model: string; models: string[] }) {
   const router = useRouter()
+  const [open, setOpen] = useState(false)
   const [enabled, setEnabled] = useState(initial)
   const [savedModel, setSavedModel] = useState(initialModel)
   const [model, setModel] = useState(initialModel)
@@ -35,8 +37,16 @@ export default function ChatbotAdminToggle({ initial, model: initialModel, model
     <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 space-y-3">
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="font-semibold text-slate-800 dark:text-slate-100">🤖 Assistente AI</p>
-          <p className="text-xs text-slate-500">Chatbot per interrogare il bilancio. Utenti non admin: colonna «Chatbot_AI» del foglio Permessi.</p>
+          <button
+            type="button"
+            onClick={() => setOpen(!open)}
+            aria-expanded={open}
+            className="flex items-center gap-2 text-left cursor-pointer"
+          >
+            <Chevron open={open} />
+            <span className="font-semibold text-slate-800 dark:text-slate-100">🤖 Assistente AI</span>
+          </button>
+          <p className="text-xs text-slate-500 ml-5">Chatbot per interrogare il bilancio. Utenti non admin: colonna «Chatbot_AI» del foglio Permessi.</p>
         </div>
         <button
           onClick={() => run(async () => { await save({ enabled: !enabled }); setEnabled(!enabled); router.refresh() })}
@@ -46,7 +56,7 @@ export default function ChatbotAdminToggle({ initial, model: initialModel, model
           {enabled ? "Attivo" : "Spento"}
         </button>
       </div>
-      <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+      <div className={`${open ? "flex" : "hidden"} flex-wrap items-center gap-2 text-sm text-slate-600 dark:text-slate-300`}>
         <label htmlFor="chatbot-model">Modello</label>
         <select
           id="chatbot-model"
