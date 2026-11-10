@@ -16,6 +16,46 @@ function parseImporto(raw: string): number {
   return isNaN(n) ? 0 : n
 }
 
+/** Un testo che inizia con = + - @ verrebbe interpretato da Sheets come formula: l'apice lo rende testo semplice. */
+function safeText<T>(v: T): T | string {
+  if (typeof v === "string" && v !== "-" && /^[=+\-@\t\r]/.test(v)) return `'${v}`
+  return v
+}
+
+export class ValidationError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = "ValidationError"
+  }
+}
+
+const MAX_TESTO = 2000
+
+/** Controlla i campi di una nota ricevuti dal client; solleva ValidationError se non validi. */
+export function validaDatiMovimento(d: Record<string, unknown>): void {
+  for (const k of ["inOut", "modalita", "fondo", "codice", "note"]) {
+    const v = d[k]
+    if (v == null) continue
+    if (typeof v !== "string") throw new ValidationError(`Campo "${k}" non valido`)
+    if (v.length > MAX_TESTO) throw new ValidationError(`Campo "${k}" troppo lungo (max ${MAX_TESTO} caratteri)`)
+  }
+
+  const data = d.data
+  if (data != null && data !== "") {
+    const m = typeof data === "string" ? /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(data) : null
+    const giorno = m ? Number(m[1]) : 0
+    const mese = m ? Number(m[2]) : 0
+    const anno = m ? Number(m[3]) : 0
+    const dt = new Date(Date.UTC(anno, mese - 1, giorno))
+    if (!m || dt.getUTCFullYear() !== anno || dt.getUTCMonth() !== mese - 1 || dt.getUTCDate() !== giorno)
+      throw new ValidationError("Data non valida (formato gg/mm/aaaa)")
+  }
+
+  const importo = d.importo
+  if (importo != null && (typeof importo !== "number" || !Number.isFinite(importo)))
+    throw new ValidationError("Importo non valido")
+}
+
 function isDataRow(row: string[]): boolean {
   const dateCell = row[1] || ""
   // Esclude righe vuote e righe intestazione (dove la cella data contiene testo non-data)
@@ -99,7 +139,7 @@ async function archiviaNota(spreadsheetId: string, branca: Branca, rowNumber: nu
   })
   const row = ((src.data.values?.[0]) || []) as unknown[]
   if (row.every(c => c === "" || c == null)) return
-  const cell = (i: number) => row[i] ?? ""
+  const cell = (i: number) => safeText(row[i] ?? "")
 
   // Le righe dello storico sono preformattate: si cerca la prima libera in B/J invece di usare append
   const used = await sheets.spreadsheets.values.get({ spreadsheetId, range: `'${title}'!B${STORICO_FIRST_ROW}:J` })
@@ -189,7 +229,7 @@ export async function deleteStoricoRow(spreadsheetId: string, rowNumber: number,
   const block: unknown[][] = []
   for (let i = 0; i <= last - rowNumber; i++) {
     const src = below[i]
-    block.push(Array.from({ length: 16 }, (_, c) => src?.[c] ?? ""))
+    block.push(Array.from({ length: 16 }, (_, c) => safeText(src?.[c] ?? "")))
   }
 
   await sheets.spreadsheets.values.update({
@@ -237,13 +277,13 @@ export async function addMovimento(
           range: `${branca}!A${targetRow}:H${targetRow}`,
           values: [[
             nextNum,
-            data.data,
-            data.inOut,
-            data.modalita,
-            data.fondo,
+            safeText(data.data),
+            safeText(data.inOut),
+            safeText(data.modalita),
+            safeText(data.fondo),
             data.importo,
-            data.codice,
-            data.note,
+            safeText(data.codice),
+            safeText(data.note),
           ]],
         },
         {
@@ -297,13 +337,13 @@ export async function updateMovimento(
         {
           range: `${branca}!B${rowNumber}:H${rowNumber}`,
           values: [[
-            data.data ?? "",
-            data.inOut ?? "",
-            data.modalita ?? "",
-            data.fondo ?? "",
+            safeText(data.data ?? ""),
+            safeText(data.inOut ?? ""),
+            safeText(data.modalita ?? ""),
+            safeText(data.fondo ?? ""),
             data.importo ?? 0,
-            data.codice ?? "",
-            data.note ?? "",
+            safeText(data.codice ?? ""),
+            safeText(data.note ?? ""),
           ]],
         },
         {
@@ -353,7 +393,7 @@ export async function deleteMovimento(
   }
 
   // Colonne B:O → B:H (dati) e J:O (ID_NOTA, Allegati, audit); I (Status, formula) non viene toccata
-  const cell = (row: unknown[] | undefined, i: number) => row?.[i] ?? ""
+  const cell = (row: unknown[] | undefined, i: number) => safeText(row?.[i] ?? "")
   const count = last - rowNumber + 1
   const dataBlock: unknown[][] = []
   const idBlock: unknown[][] = []

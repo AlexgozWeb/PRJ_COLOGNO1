@@ -2,7 +2,7 @@ import { NextRequest } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { getConfig, isAdmin, getUserPermessi, getAnnoAttivoName, getListeValori } from "@/lib/config"
-import { getMovimenti, addMovimento, updateMovimento, deleteMovimento, StaleRowError } from "@/lib/sheets"
+import { getMovimenti, addMovimento, updateMovimento, deleteMovimento, StaleRowError, validaDatiMovimento, ValidationError } from "@/lib/sheets"
 import { archiveNotaAllegati, parseAnnoFromFileName } from "@/lib/blob"
 import { logError } from "@/lib/logger"
 import { Branca } from "@/types"
@@ -72,6 +72,12 @@ export async function POST(
     if (!auth) return errResponse("Non autorizzato", 401)
 
     const body = await req.json()
+    try {
+      validaDatiMovimento(body)
+    } catch (e) {
+      if (e instanceof ValidationError) return errResponse(e.message, 400)
+      throw e
+    }
     if (!(await inOutValido(body.inOut))) return errResponse("In/Out obbligatorio (scegli un valore della lista)", 400)
     const config = await getConfig()
     if (!config.annoAttivo) return errResponse("Anno attivo non configurato")
@@ -99,6 +105,12 @@ export async function PUT(
 
     const { rowNumber, ...data } = await req.json()
     if (!rowNumber) return errResponse("rowNumber mancante", 400)
+    try {
+      validaDatiMovimento(data)
+    } catch (e) {
+      if (e instanceof ValidationError) return errResponse(e.message, 400)
+      throw e
+    }
     if (!(await inOutValido(data.inOut))) return errResponse("In/Out obbligatorio (scegli un valore della lista)", 400)
 
     const config = await getConfig()
