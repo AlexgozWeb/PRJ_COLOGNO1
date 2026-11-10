@@ -9,6 +9,7 @@ import { Branca, BRANCA_CODICE } from "@/types"
 
 const BRANCHE_VALIDE: Branca[] = ['LC', 'CdA', 'EG', 'Novi', 'Clan', 'CoCa', 'Gruppo']
 const ALLOWED_MIME = new Set(["image/jpeg", "image/png", "application/pdf"])
+const ID_NOTA_RE = /^[A-Za-z0-9_-]{1,40}$/
 
 function errResponse(msg: string, status = 500) {
   return Response.json({ error: msg }, { status })
@@ -49,6 +50,7 @@ export async function GET(
   const { branca, idNota } = await ctx.params
   try {
     if (!BRANCHE_VALIDE.includes(branca as Branca)) return errResponse("Branca non valida", 400)
+    if (!ID_NOTA_RE.test(idNota)) return errResponse("ID nota non valido", 400)
     const auth = await checkAuth(branca as Branca)
     if (!auth) return errResponse("Non autorizzato", 401)
 
@@ -74,6 +76,7 @@ export async function POST(
   const { branca, idNota } = await ctx.params
   try {
     if (!BRANCHE_VALIDE.includes(branca as Branca)) return errResponse("Branca non valida", 400)
+    if (!ID_NOTA_RE.test(idNota)) return errResponse("ID nota non valido", 400)
     const auth = await checkAuth(branca as Branca, true)
     if (!auth) return errResponse("Non autorizzato", 401)
 
@@ -110,6 +113,7 @@ export async function DELETE(
   const { branca, idNota } = await ctx.params
   try {
     if (!BRANCHE_VALIDE.includes(branca as Branca)) return errResponse("Branca non valida", 400)
+    if (!ID_NOTA_RE.test(idNota)) return errResponse("ID nota non valido", 400)
     const auth = await checkAuth(branca as Branca, true)
     if (!auth) return errResponse("Non autorizzato", 401)
 

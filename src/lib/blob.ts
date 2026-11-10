@@ -13,6 +13,18 @@ function notaPrefix(anno: string, branca: Branca, idNota: string): string {
   return `allegati/${anno}/${BRANCA_CODICE[branca]}/${idNota}/`
 }
 
+const MAX_NOME_FILE = 100
+
+/** Tiene solo l'ultimo segmento del nome e sostituisce i caratteri non sicuri; l'estensione viene conservata. */
+export function sanitizeFilename(name: string): string {
+  const base = (name.split(/[\\/]/).pop() || "").replace(/[^A-Za-z0-9._ -]/g, "_").replace(/^[.\s]+/, "").trim()
+  if (!base) return "allegato"
+  if (base.length <= MAX_NOME_FILE) return base
+  const dot = base.lastIndexOf(".")
+  const ext = dot > 0 ? base.slice(dot).slice(0, 10) : ""
+  return base.slice(0, MAX_NOME_FILE - ext.length) + ext
+}
+
 export async function uploadAllegato(
   anno: string,
   branca: Branca,
@@ -21,12 +33,13 @@ export async function uploadAllegato(
   mimeType: string,
   buffer: Buffer
 ): Promise<AllegatoFile> {
-  const pathname = `${notaPrefix(anno, branca, idNota)}${filename}`
+  const safeName = sanitizeFilename(filename)
+  const pathname = `${notaPrefix(anno, branca, idNota)}${safeName}`
   const blob = await put(pathname, buffer, {
     access: "private",
     contentType: mimeType,
   })
-  return { id: blob.url, name: filename, mimeType }
+  return { id: blob.url, name: safeName, mimeType }
 }
 
 function mimeFromExt(filename: string): string {
