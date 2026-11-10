@@ -1,7 +1,7 @@
 # Storia dell'app "Nota Spese Cologno 1"
 
 App Next.js / React per il bilancio del Gruppo Scout Cologno 1. Login Google (NextAuth), dati su Google Sheets (file "App Config" + un foglio bilancio per annata, con un tab per branca), allegati su Vercel Blob.
-Branca `dev` → progetto Vercel `prj-cologno-1-dev`; branca `master` → `prj-cologno-1`. I dati (Sheets e Blob) sono condivisi fra i due ambienti.
+Branca `dev` → progetto Vercel `prj-cologno-1-dev`; branca `master` → `prj-cologno-1`. I fogli Google (App Config e bilanci) sono condivisi fra i due ambienti, tranne l'anno attivo (`anno_attivo` per produzione, `anno_attivo_dev` per sviluppo). Gli allegati stanno in due store Blob privati separati, uno per ambiente.
 
 ## 1. Prima versione (28/10/2026) — sviluppo con Claude Code
 - Creazione del progetto e app completa "Nota Spese Cologno 1".
@@ -59,8 +59,36 @@ Branca `dev` → progetto Vercel `prj-cologno-1-dev`; branca `master` → `prj-c
 - Anteprima con miniatura (clic per aprire a grandezza intera), dimensioni "prima → dopo", rotazione ↺/↻ e rimozione.
 - L'upload avviene solo al "Salva"; il limite di `max_attachment_size_mb` si applica al file compresso.
 
+## 10. Archivio cancellazioni (6/11/2026)
+- Le note cancellate finiscono nel foglio «Storico Cancellazioni» e i loro allegati vengono spostati in `allegati/{anno}/cancellazioni/{ID_NOTA}/`.
+- Dashboard admin «Storico cancellazioni» (sola lettura) con eliminazione definitiva di nota e allegati (solo admin, annata attiva).
+
+## 11. Menu laterale, Report e Assistente AI (7–8/11/2026)
+- Menu laterale con icone e elenco dei Report; Report «Prima Nota» (con icona dedicata).
+- Voce «Assistente AI» nel menu, attivabile dal pannello admin e con aggiornamento immediato della voce.
+
+## 12. Versioning e ambienti (9/11/2026, v2.1.0 → v2.4.0)
+- Versione dell'app mostrata nel menu, nel login e nell'admin, con hash del commit; su `dev` appare `-dev`.
+- Login con scelta dell'account Google e voce «Cambia utente».
+- Anno attivo separato per lo sviluppo (`anno_attivo_dev`) e lettura delle impostazioni per nome.
+- Pannello admin con sezioni a comparsa.
+- **Guida utenti** statica su `/guida`, raggiungibile anche senza login dal link nella pagina di accesso.
+- Rilasci con tag e Release GitHub: `v2.0.0` … `v2.4.0`.
+
+## 13. Sicurezza e Blob privati (9–10/11/2026, v2.4.1 → v3.0.0)
+Revisione di sicurezza dell'app e correzioni:
+- **Download allegati** (`b3b3b6c`): accetta solo URL dello store Blob (host e percorso verificati), senza seguire redirect; nome del file ripulito.
+- **Cancellazione allegati** (`f05459f`): consentita solo per i file della nota indicata.
+- **Formule nel foglio** (`63b6f59`): i testi che iniziano con `=`, `+`, `-`, `@` vengono scritti come testo; validazione lato server di data (`gg/mm/aaaa`), importo e lunghezza dei testi.
+- **Blob privati e separati** (`de1ab08`, v2.4.1): un store privato per `dev` (`scout-bilancio-allegati-priv_dev`) e uno per produzione (`scout-bilancio-allegati-priv_pro`). I file sono leggibili solo dopo il login, tramite la route di download; l'URL diretto risponde 403. L'archivio delle cancellazioni è visibile solo agli admin.
+- **Allegati** (`2b9a3df`): validazione di `idNota` e pulizia del nome file in upload.
+- **Intestazioni HTTP** (`362434c`, v2.4.2): `X-Frame-Options`, `nosniff`, `Referrer-Policy`, `Strict-Transport-Security`, `Permissions-Policy`.
+- **v3.0.0**: versione stabile con store Blob multipli (uno per ambiente) e correzioni di sicurezza.
+
 ## Da fare / note aperte
 - Controllo dell'ID nota anche in modifica (PUT).
 - Backfill della colonna K per le note già con allegati.
 - Pulizia del codice legacy: `drive.ts`, `change_drive.md`, pagina `nota/[rowId]` e `NotaAllegati.tsx`.
-- Dati condivisi fra dev e produzione; blob con accesso pubblico.
+- Validare il parametro `fileId` delle pagine rispetto all'elenco dei bilanci (`listBilanci()`): rinviato.
+- Il file «App Config» (permessi, admin, Lista Valori) è ancora condiviso fra dev e produzione.
+- Aggiornare la Guida (`public/guida.html`): riporta ancora «DEV / dati fittizi».
