@@ -23,7 +23,7 @@ export async function uploadAllegato(
 ): Promise<AllegatoFile> {
   const pathname = `${notaPrefix(anno, branca, idNota)}${filename}`
   const blob = await put(pathname, buffer, {
-    access: "public",
+    access: "private",
     contentType: mimeType,
   })
   return { id: blob.url, name: filename, mimeType }
@@ -67,7 +67,7 @@ export async function archiveNotaAllegati(anno: string, branca: Branca, idNota: 
   const { blobs } = await list({ prefix: notaPrefix(anno, branca, idNota) })
   for (const b of blobs) {
     const name = b.pathname.split("/").pop() || b.pathname
-    await copy(b.url, `allegati/${anno}/cancellazioni/${idNota}/${name}`, { access: "public", addRandomSuffix: false, allowOverwrite: true })
+    await copy(b.url, `allegati/${anno}/cancellazioni/${idNota}/${name}`, { access: "private", addRandomSuffix: false, allowOverwrite: true })
     await del(b.url)
   }
 }

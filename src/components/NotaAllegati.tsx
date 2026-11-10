@@ -78,7 +78,7 @@ export default function NotaAllegati({ allegati: initial, branca, idNota }: Prop
 
             {/* Nome file */}
             <a
-              href={a.id}
+              href={`/api/allegati/download?url=${encodeURIComponent(a.id)}&inline=1`}
               target="_blank"
               rel="noopener noreferrer"
               className="flex-1 text-sm text-slate-700 dark:text-slate-200 hover:underline truncate"

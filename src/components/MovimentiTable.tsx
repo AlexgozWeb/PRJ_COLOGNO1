@@ -744,7 +744,7 @@ export default function MovimentiTable({ movimenti, branca, canEdit, maxAttachme
                     <ul className="space-y-1">
                       {existingAllegati.filter(a => !pendingDeletes.includes(a.id)).map(a => (
                         <li key={a.id} className="flex items-center justify-between gap-2 text-xs bg-slate-50 dark:bg-slate-700 rounded-lg px-2 py-1.5">
-                          <a href={a.id} target="_blank" rel="noopener noreferrer" className="truncate text-slate-700 dark:text-slate-200 hover:underline">
+                          <a href={`/api/allegati/download?url=${encodeURIComponent(a.id)}&inline=1`} target="_blank" rel="noopener noreferrer" className="truncate text-slate-700 dark:text-slate-200 hover:underline">
                             {a.mimeType === "application/pdf" ? "📄" : "🖼️"} {a.name}
                           </a>
                           <button
@@ -916,7 +916,7 @@ export default function MovimentiTable({ movimenti, branca, canEdit, maxAttachme
                         </svg>
                       </a>
                       {/* Nome */}
-                      <a href={a.id} target="_blank" rel="noopener noreferrer" className="flex-1 text-sm text-slate-700 dark:text-slate-200 hover:underline truncate">
+                      <a href={`/api/allegati/download?url=${encodeURIComponent(a.id)}&inline=1`} target="_blank" rel="noopener noreferrer" className="flex-1 text-sm text-slate-700 dark:text-slate-200 hover:underline truncate">
                         {a.mimeType === "application/pdf" ? "📄" : "🖼️"} {a.name}
                       </a>
                     </li>

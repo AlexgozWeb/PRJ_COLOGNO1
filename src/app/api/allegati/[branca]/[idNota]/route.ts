@@ -131,7 +131,7 @@ export async function DELETE(
     if (
       !/^[A-Za-z0-9_-]+$/.test(idNota) ||
       parsed.protocol !== "https:" ||
-      !parsed.hostname.endsWith(".public.blob.vercel-storage.com") ||
+      !parsed.hostname.endsWith(".private.blob.vercel-storage.com") ||
       !parsed.pathname.startsWith(prefix) ||
       parsed.pathname.includes("..")
     ) {

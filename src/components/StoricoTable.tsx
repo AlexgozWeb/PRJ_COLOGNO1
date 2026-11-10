@@ -325,7 +325,7 @@ export default function StoricoTable({ movimenti, liste, fileId, canDelete }: Pr
                           <line x1="12" y1="15" x2="12" y2="3"/>
                         </svg>
                       </a>
-                      <a href={a.id} target="_blank" rel="noopener noreferrer" className="flex-1 text-sm text-slate-700 dark:text-slate-200 hover:underline truncate">
+                      <a href={`/api/allegati/download?url=${encodeURIComponent(a.id)}&inline=1`} target="_blank" rel="noopener noreferrer" className="flex-1 text-sm text-slate-700 dark:text-slate-200 hover:underline truncate">
                         {a.mimeType === "application/pdf" ? "📄" : "🖼️"} {a.name}
                       </a>
                     </li>
